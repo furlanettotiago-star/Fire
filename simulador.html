@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulador FIRE – Plano Tiago</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── tokens ─────────────────────────────── */
+    :root {
+      --bg:          #020617;
+      --card:        #0c1222;
+      --card2:       #0f172a;
+      --border:      #1e293b;
+      --accent:      #4ade80;
+      --accent-soft: rgba(74,222,128,.14);
+      --blue:        #60a5fa;
+      --blue-soft:   rgba(96,165,250,.14);
+      --orange:      #fb923c;
+      --orange-soft: rgba(251,146,60,.14);
+      --text:        #f1f5f9;
+      --muted:       #475569;
+      --muted2:      #94a3b8;
+      --radius:      12px;
+    }
+
+    /* ── reset ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── header ──────────────────────────────── */
+    .header {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(2,6,23,.95);
+      backdrop-filter: blur(12px);
+    }
+    .header h1 {
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+    .header h1 em { font-style: normal; color: var(--accent); }
+    .header-badge {
+      font-size: .68rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(74,222,128,.3);
+      font-weight: 600;
+    }
+
+    /* ── layout ──────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: calc(100vh - 53px);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── sidebar ─────────────────────────────── */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 18px 14px 32px;
+      overflow-y: auto;
+      background: var(--card);
+    }
+
+    .sec-label {
+      font-size: .6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--orange);
+      margin: 18px 0 8px;
+    }
+    .sec-label:first-child { margin-top: 0; }
+
+    .field       { margin-bottom: 8px; }
+    .field label {
+      display: block;
+      font-size: .7rem;
+      color: var(--muted2);
+      margin-bottom: 3px;
+    }
+    .iw { position: relative; }
+    .iw .pre,
+    .iw .suf {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      font-size: .72rem;
+      font-weight: 600;
+      pointer-events: none;
+      color: var(--accent);
+    }
+    .iw .pre { left: 10px; }
+    .iw .suf { right: 10px; color: var(--muted2); }
+
+    .field input {
+      width: 100%;
+      background: rgba(2,6,23,.7);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: 500 .88rem 'Inter', sans-serif;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input.pl { padding-left: 34px; }
+    .field input.pr { padding-right: 42px; }
+    .field input:focus { border-color: var(--accent); }
+    .field input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+    /* ── main ────────────────────────────────── */
+    .main {
+      padding: 18px 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── kpi grid ────────────────────────────── */
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 700px) { .kpis { grid-template-columns: 1fr 1fr; } }
+
+    .kpi {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .kpi-lbl {
+      font-size: .63rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .kpi-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .kpi-val.g { color: var(--accent); }
+    .kpi-val.b { color: var(--blue); }
+    .kpi-val.o { color: var(--orange); }
+    .kpi-sub { font-size: .68rem; color: var(--muted2); margin-top: 3px; }
+
+    /* ── warning ─────────────────────────────── */
+    .warn {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: .76rem;
+      background: var(--orange-soft);
+      border: 1px solid rgba(251,146,60,.35);
+      color: var(--orange);
+    }
+    .warn.on { display: block; }
+
+    /* ── chart card ──────────────────────────── */
+    .chart-card {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      flex: 1;
+    }
+    .chart-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .chart-title    { font-size: .85rem; font-weight: 700; }
+    .chart-subtitle { font-size: .71rem; color: var(--muted2); margin-top: 2px; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+    .leg-item { display: flex; align-items: center; gap: 5px; font-size: .69rem; color: var(--muted2); }
+    .leg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .leg-dash {
+      width: 18px; height: 2px;
+      background: repeating-linear-gradient(90deg, var(--blue) 0, var(--blue) 4px, transparent 4px, transparent 8px);
+      flex-shrink: 0;
+    }
+
+    .chart-wrap { position: relative; height: 360px; }
+
+    /* ── footer note ─────────────────────────── */
+    .foot {
+      font-size: .7rem;
+      color: var(--muted);
+      line-height: 1.55;
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+    }
+    .foot strong { color: var(--muted2); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>FIRE <em>Variável</em></h1>
+  <span class="header-badge">Simulador Interativo</span>
+</div>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <div class="sec-label">Você</div>
+    <div class="row2">
+      <div class="field">
+        <label>Idade atual</label>
+        <div class="iw">
+          <input type="number" id="iAge" value="46" min="18" max="80" step="1" class="pr" />
+          <span class="suf">anos</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Fim da vida</label>
+        <div class="iw">
+          <input type="number" id="iDeath" value="90" min="50" max="120" step="1" class="pr" />
+          <span class="suf">anos</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-label">Patrimônio atual</div>
+    <div class="field">
+      <label>Capital inicial (R$)</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="number" id="iCapital" value="5500000" min="0" step="50000" class="pl" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Rendimento real anual</label>
+      <div class="iw">
+        <input type="number" id="iReturn" value="5" min="0" max="30" step="0.1" class="pr" />
+        <span class="suf">% a.a.</span>
+      </div>
+    </div>
+
+    <div class="sec-label">Renda mensal (pré-FIRE)</div>
+    <div class="field">
+      <label>Salário + dividendos (R$)</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="number" id="iIncome" value="200000" min="0" step="1000" class="pl" />
+      </div>
+    </div>
+
+    <hr class="sep" />
+
+    <div class="sec-label">Data do FIRE</div>
+    <div class="row2">
+      <div class="field">
+        <label>Idade no FIRE</label>
+        <div class="iw">
+          <input type="number" id="iFire" value="52" min="25" max="90" step="1" class="pr" />
+          <span class="suf">anos</span>
+        </div>
+      </div>
+      <div class="field" style="grid-column: 1/-1">
+        <label>Valor da venda das cotas (R$)</label>
+        <div class="iw">
+          <span class="pre">R$</span>
+          <input type="number" id="iCota" value="13000000" min="0" step="100000" class="pl" />
+        </div>
+      </div>
+    </div>
+
+    <hr class="sep" />
+
+    <div class="sec-label">Gastos mensais por fase</div>
+    <div class="field">
+      <label id="lblF1">Fase 1 – hoje até 60 anos (R$)</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="number" id="iS1" value="120000" min="0" step="1000" class="pl" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Fase 2 – 60 aos 75 anos (R$)</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="number" id="iS2" value="80000" min="0" step="1000" class="pl" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Fase 3 – após 75 anos (R$)</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="number" id="iS3" value="50000" min="0" step="1000" class="pl" />
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-lbl">Patrimônio no FIRE</div>
+        <div class="kpi-val g" id="kFireW">—</div>
+        <div class="kpi-sub" id="kFireA">aos — anos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Patrimônio final (gasto padrão)</div>
+        <div class="kpi-val" id="kFinalW">—</div>
+        <div class="kpi-sub" id="kFinalA">aos — anos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Gasto máximo (chegar a zero)</div>
+        <div class="kpi-val b" id="kDWZ">—</div>
+        <div class="kpi-sub" id="kDWZsub">por mês, pós-FIRE</div>
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="warn" id="warn"></div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-top">
+        <div>
+          <div class="chart-title">Evolução do Patrimônio</div>
+          <div class="chart-subtitle">Valores em R$ de hoje (acima da inflação) · juros compostos anuais</div>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>Gasto padrão</div>
+          <div class="leg-item"><div class="leg-dash"></div>Chegar a zero</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--orange);border-radius:2px;width:12px;height:3px"></div>FIRE</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Footer note -->
+    <div class="foot">
+      Simulação em base real (acima da inflação). <strong>Linha verde:</strong> patrimônio se mantiver os gastos
+      planejados por fase. <strong>Linha azul tracejada:</strong> patrimônio se gastar o máximo para chegar a zero
+      aos <span id="footDeath">90</span> anos. A <strong>linha laranja</strong> marca a data do FIRE — a partir
+      daí a renda mensal cessa e o valor das cotas é incorporado ao patrimônio.
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── HELPERS ──────────────────────────────────────────── */
+const $   = id => document.getElementById(id);
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+
+function fmtM(n) {
+  const abs = Math.abs(n) / 1e6;
+  const sign = n < 0 ? '−' : '';
+  const str = abs >= 100 ? abs.toFixed(0) : abs >= 10 ? abs.toFixed(1) : abs.toFixed(2);
+  return `${sign}R$ ${str}M`;
+}
+
+/* ── READ INPUTS ──────────────────────────────────────── */
+function P() {
+  const age    = +$('iAge').value    || 46;
+  const death  = +$('iDeath').value  || 90;
+  const fire   = Math.min(Math.max(+$('iFire').value || 52, age + 1), death - 1);
+  return {
+    age, death, fire,
+    capital: +$('iCapital').value || 0,
+    ret:     (+$('iReturn').value || 5) / 100,
+    income:  +$('iIncome').value  || 0,
+    cota:    +$('iCota').value    || 0,
+    s1:      +$('iS1').value      || 0,
+    s2:      +$('iS2').value      || 0,
+    s3:      +$('iS3').value      || 0,
+  };
+}
+
+/* ── FINANCIAL ENGINE ─────────────────────────────────── */
+
+// Convert annual real return to monthly equivalent
+function rm(ret) { return Math.pow(1 + ret, 1 / 12) - 1; }
+
+// Monthly spending by life phase (independent of FIRE)
+function spend(age, p) {
+  if (age < 60) return p.s1;
+  if (age < 75) return p.s2;
+  return p.s3;
+}
+
+/*
+  simulate(p, dwzSpend)
+  ─────────────────────
+  Simulates month-by-month from age to death.
+  Returns one data point per year: [{ age, balance }]
+
+  If dwzSpend is null   → use standard phase spending post-FIRE
+  If dwzSpend is number → use that flat monthly spend post-FIRE (Die With Zero line)
+
+  Pre-FIRE  : balance grows with income − phase_spending + interest
+  At FIRE   : cota sale added once (first month curAge >= fire)
+  Post-FIRE : balance grows with −phase_spending (or −dwzSpend) + interest
+*/
+function simulate(p, dwzSpend = null) {
+  const rate   = rm(p.ret);
+  let balance  = p.capital;
+  let fired    = false;
+  const result = [{ age: p.age, balance }];
+
+  const totalMonths = (p.death - p.age) * 12;
+
+  for (let m = 1; m <= totalMonths; m++) {
+    const curAge = p.age + m / 12;
+
+    // 1. Monthly interest
+    balance *= (1 + rate);
+
+    // 2. FIRE event: receive cota sale the first month we cross fire age
+    if (!fired && curAge >= p.fire) {
+      balance += p.cota;
+      fired = true;
+    }
+
+    // 3. Income (only pre-FIRE)
+    if (curAge < p.fire) {
+      balance += p.income;
+    }
+
+    // 4. Monthly spending
+    const withdrawal = (dwzSpend !== null && curAge >= p.fire)
+      ? dwzSpend
+      : spend(curAge, p);
+    balance -= withdrawal;
+
+    // Record one data point per year
+    if (m % 12 === 0) {
+      result.push({ age: Math.round(p.age + m / 12), balance });
+    }
+  }
+
+  return result;
+}
+
+/*
+  calcDWZ(fireBalance, p)
+  ────────────────────────
+  Given the portfolio value AT the FIRE date, find the constant
+  monthly withdrawal that depletes it exactly to 0 at death age.
+
+  This is a standard Present-Value-of-Annuity inversion:
+    PMT = PV × r_m / (1 − (1 + r_m)^−n)
+*/
+function calcDWZ(fireBalance, p) {
+  const rate = rm(p.ret);
+  const n    = (p.death - p.fire) * 12;
+  if (n <= 0 || fireBalance <= 0) return 0;
+  return fireBalance * rate / (1 - Math.pow(1 + rate, -n));
+}
+
+/* ── CHART ────────────────────────────────────────────── */
+let chartInst = null;
+
+// Custom plugin: draws an orange dashed vertical line at the FIRE age
+const fireLine = {
+  id: 'fireLine',
+  afterDraw(chart, _args, opts) {
+    if (!opts.fireAge) return;
+    const { ctx, chartArea, scales } = chart;
+    const x = scales.x.getPixelForValue(String(opts.fireAge));
+    if (!x || x < chartArea.left || x > chartArea.right) return;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.strokeStyle = 'rgba(251,146,60,.65)';
+    ctx.lineWidth   = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(251,146,60,.8)';
+    ctx.font      = '600 10px Inter, sans-serif';
+    ctx.fillText(`FIRE – ${opts.fireAge}a`, x + 5, chartArea.top + 14);
+    ctx.restore();
+  }
+};
+
+Chart.register(fireLine);
+
+function drawChart(line1, line2, fireAge) {
+  const labels = line1.map(d => String(d.age));
+  const d1     = line1.map(d => +(d.balance / 1e6).toFixed(3));
+  const d2     = line2.map(d => +(d.balance / 1e6).toFixed(3));
+
+  const cfg = {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Gasto padrão',
+          data: d1,
+          borderColor: '#4ade80',
+          backgroundColor: 'rgba(74,222,128,.05)',
+          borderWidth: 2.2,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          fill: false,
+        },
+        {
+          label: 'Chegar a zero',
+          data: d2,
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96,165,250,.05)',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          fill: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        fireLine: { fireAge: String(fireAge) },
+        tooltip: {
+          backgroundColor: '#0f172a',
+          borderColor: '#1e293b',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#f1f5f9',
+          padding: 10,
+          callbacks: {
+            title: items => `Idade: ${items[0].label} anos`,
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return ` ${ctx.dataset.label}: R$ ${v.toFixed(2)} M`;
+            },
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#475569',
+            font: { size: 10 },
+            maxTicksLimit: 15,
+            callback(val, i) {
+              const lbl = this.getLabelForValue(val);
+              return i % 2 === 0 ? lbl : '';
+            }
+          },
+          grid: { color: 'rgba(30,41,59,.7)' },
+        },
+        y: {
+          ticks: {
+            color: '#475569',
+            font: { size: 10 },
+            callback: v => `R$ ${v.toFixed(0)} M`,
+          },
+          grid: { color: 'rgba(30,41,59,.7)' },
+        }
+      }
+    }
+  };
+
+  if (chartInst) {
+    chartInst.data    = cfg.data;
+    chartInst.options = cfg.options;
+    chartInst.update('none');
+  } else {
+    chartInst = new Chart($('chart'), cfg);
+  }
+}
+
+/* ── RENDER ───────────────────────────────────────────── */
+function render() {
+  const p = P();
+
+  // Update dynamic label
+  $('lblF1').textContent    = `Fase 1 – ${p.age} a 60 anos (R$)`;
+  $('footDeath').textContent = p.death;
+
+  // ── Simulate line 1 (standard phase spending)
+  const line1     = simulate(p, null);
+  const firePoint = line1.find(d => d.age >= p.fire);
+
+  // ── Calculate DWZ using balance at FIRE (after cota sale)
+  const fireBalance = firePoint ? firePoint.balance : 0;
+  const dwzSpend    = calcDWZ(fireBalance, p);
+
+  // ── Simulate line 2 (DWZ flat withdrawal post-FIRE)
+  const line2 = simulate(p, dwzSpend);
+
+  // ── KPIs
+  const finalPt = line1[line1.length - 1];
+
+  $('kFireW').textContent = firePoint ? fmtM(firePoint.balance) : '—';
+  $('kFireA').textContent = `aos ${p.fire} anos`;
+
+  const fw = finalPt.balance;
+  $('kFinalW').textContent = fmtM(fw);
+  $('kFinalW').className   = 'kpi-val ' + (fw < 0 ? 'o' : fw < 1e6 ? 'o' : '');
+  $('kFinalA').textContent  = `aos ${p.death} anos`;
+
+  $('kDWZ').textContent    = brl.format(Math.round(dwzSpend));
+  $('kDWZsub').textContent = `por mês, dos ${p.fire} aos ${p.death} anos`;
+
+  // ── Warning: money runs out before death?
+  const warn   = $('warn');
+  const zeroAt = line1.find(d => d.age > p.fire && d.balance <= 0);
+  if (zeroAt) {
+    warn.textContent = `⚠ Com o gasto padrão, o patrimônio se esgota aos ${zeroAt.age} anos — ${p.death - zeroAt.age} anos antes do fim da vida projetado. Considere reduzir os gastos ou aumentar o rendimento.`;
+    warn.classList.add('on');
+  } else {
+    warn.classList.remove('on');
+  }
+
+  // ── Chart
+  drawChart(line1, line2, p.fire);
+}
+
+/* ── WIRE UP INPUTS ───────────────────────────────────── */
+['iAge','iDeath','iCapital','iReturn','iIncome','iFire','iCota','iS1','iS2','iS3']
+  .forEach(id => $(id).addEventListener('input', render));
+
+/* ── INIT ─────────────────────────────────────────────── */
+render();
+</script>
+</body>
+</html>
