@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard FIRE – Plano Tiago</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-card: #020617;
+      --bg-grad: radial-gradient(circle at top, #111827 0, #020617 50%, #000 100%);
+      --border: #1f2937;
+      --accent: #4ade80;
+      --accent-soft: rgba(74, 222, 128, 0.2);
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --radius: 14px;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-grad);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.75));
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-pill {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 25% 20%, #4ade80, #22c55e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #022c22;
+    }
+
+    .nav-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-title span:first-child {
+      font-size: 0.76rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .nav-title span:last-child {
+      font-size: 1.02rem;
+      font-weight: 600;
+    }
+
+    .nav-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tag {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .tag span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 38px 18px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    @media (min-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1.7fr 1.3fr;
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #020617, #020617 55%);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 16px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(74, 222, 128, 0.1), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 0.94rem;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .pill {
+      font-size: 0.74rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .kpi-main {
+      font-size: 1.55rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .kpi-chip {
+      font-size: 0.78rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+    }
+
+    .kpi-chip strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .timeline-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      padding: 3px 0;
+      border-bottom: 1px dashed rgba(55, 65, 81, 0.7);
+    }
+
+    .timeline-row:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-label {
+      color: var(--muted);
+    }
+
+    .timeline-value {
+      font-weight: 500;
+    }
+
+    .badge-suggested {
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-left: 6px;
+    }
+
+    .scenario-card {
+      padding: 8px 9px 9px 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.98);
+      margin-top: 6px;
+    }
+
+    .scenario-card h4 {
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .scenario-card p {
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .scenario-kpi {
+      font-size: 1.04rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .scenario-meta {
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 220px;
+      margin-top: 8px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      border-top: 1px dashed rgba(55, 65, 81, 0.7);
+      padding-top: 10px;
+    }
+
+    .footer-note strong {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="nav-left">
+      <div class="logo-pill">TF</div>
+      <div class="nav-title">
+        <span>Plano FIRE</span>
+        <span>Dashboard – Patrimônio & Liberdade</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="tag">Idade atual: <span>46 anos</span></div>
+      <div class="tag">Alvo: <span>FIRE 50–52</span></div>
+      <div class="tag">Herança alvo aos 90: <span>R$ 10M</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Topo: visão geral + gráfico patrimônio -->
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Snapshot do Plano</div>
+          <div class="card-subtitle">Situação atual e principais premissas</div>
+        </div>
+        <span class="pill">Die With Zero · FIRE</span>
+      </div>
+
+      <div class="kpi-main">R$ 5.500.000</div>
+      <div class="kpi-label">Patrimônio financeiro atual investido (base real)</div>
+
+      <div class="kpi-row">
+        <div class="kpi-chip">
+          Poupança mensal até FIRE: <strong>R$ 200.000</strong>
+        </div>
+        <div class="kpi-chip">
+          Retorno real alvo: <strong>5% ao ano</strong>
+        </div>
+        <div class="kpi-chip">
+          Venda de cotas no FIRE: <strong>+R$ 13.000.000</strong>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-chip">
+          Presente aos filhos aos 60: <strong>R$ 3.000.000</strong>
+        </div>
+        <div class="kpi-chip">
+          Gasto padrão pós-FIRE: <strong>R$ 120k → 80k/mês</strong>
+        </div>
+      </div>
+
+      <div class="section-title">Linha do tempo chave</div>
+      <div class="timeline-row">
+        <div class="timeline-label">Hoje</div>
+        <div class="timeline-value">46 anos · Fase de acumulação</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">FIRE 50</div>
+        <div class="timeline-value">R$ 30,3M · Gasto máx.: ~R$ 128k/mês</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">FIRE 52</div>
+        <div class="timeline-value">R$ 37,1M · Gasto máx.: ~R$ 161k/mês</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">FIRE 55</div>
+        <div class="timeline-value">R$ 48,7M · Gasto máx.: ~R$ 221k/mês</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">FIRE 60</div>
+        <div class="timeline-value">R$ 72,2M · Gasto máx.: ~R$ 353k/mês</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-label">FIRE 65</div>
+        <div class="timeline-value">R$ 102,2M · Gasto máx.: ~R$ 571k/mês</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Curva de Patrimônio – Cenários FIRE</div>
+          <div class="card-subtitle">Patrimônio estimado no momento do FIRE (com 13M)</div>
+        </div>
+        <span class="pill">50 · 52 · 55 · 60 · 65</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="wealthFireChart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <!-- Cenários FIRE -->
+  <div class="grid grid-3" style="margin-top: 16px;">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">FIRE aos 50</div>
+          <div class="card-subtitle">Aposentadoria agressiva, folga moderada</div>
+        </div>
+        <span class="pill">Cenário antecipado</span>
+      </div>
+      <div class="scenario-kpi">R$ 30.307.650 no FIRE</div>
+      <div class="scenario-meta">
+        Com o gasto padrão (120k → 80k), você ainda termina com ~R$ 38M aos 90.
+      </div>
+      <div class="scenario-card">
+        <h4>Gasto máximo (Die With Zero):</h4>
+        <p>
+          Para terminar com R$ 10M aos 90, o gasto sustentável seria
+          de aproximadamente <strong>R$ 127.908/mês</strong>.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">FIRE aos 52</div>
+          <div class="card-subtitle">Equilíbrio entre tempo e segurança</div>
+        </div>
+        <span class="pill">Sweet spot</span>
+      </div>
+      <div class="scenario-kpi">
+        R$ 37.133.950 no FIRE
+        <span class="badge-suggested">Recomendado</span>
+      </div>
+      <div class="scenario-meta">
+        Mantendo o padrão de gasto, você termina com ~R$ 81M aos 90.
+      </div>
+      <div class="scenario-card">
+        <h4>Gasto máximo (Die With Zero):</h4>
+        <p>
+          Para chegar em R$ 10M aos 90, poderia gastar
+          cerca de <strong>R$ 161.349/mês</strong>.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">FIRE aos 55</div>
+          <div class="card-subtitle">Maior robustez, altíssimo conforto</div>
+        </div>
+        <span class="pill">Muito conservador</span>
+      </div>
+      <div class="scenario-kpi">R$ 48.707.440 no FIRE</div>
+      <div class="scenario-meta">
+        Com o gasto padrão, você termina com ~R$ 138M aos 90.
+      </div>
+      <div class="scenario-card">
+        <h4>Gasto máximo (Die With Zero):</h4>
+        <p>
+          Para terminar com R$ 10M, poderia gastar
+          aproximadamente <strong>R$ 220.764/mês</strong>.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Linha inferior: cenários tardios + gráfico gasto máximo -->
+  <div class="grid grid-2" style="margin-top: 16px;">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">FIRE tardio (60 / 65)</div>
+          <div class="card-subtitle">Acúmulo extremo de patrimônio</div>
+        </div>
+        <span class="pill">Overkill</span>
+      </div>
+      <p class="section-subtitle">
+        FIRE muito tardio leva a um patrimônio que dificilmente será consumido em vida, o que vai contra a filosofia
+        de <strong>Die With Zero</strong> (otimizar uso do dinheiro enquanto há energia).
+      </p>
+      <div class="scenario-card">
+        <h4>FIRE aos 60</h4>
+        <p>
+          · Patrimônio no FIRE: <strong>R$ 72.190.760</strong><br>
+          · Patrimônio aos 90 (gasto padrão): ~<strong>R$ 217M</strong><br>
+          · Gasto máximo para terminar com 10M: <strong>~R$ 353.047/mês</strong>.
+        </p>
+      </div>
+      <div class="scenario-card">
+        <h4>FIRE aos 65</h4>
+        <p>
+          · Patrimônio no FIRE: <strong>R$ 102.162.070</strong><br>
+          · Patrimônio aos 90 (gasto padrão): ~<strong>R$ 291M</strong><br>
+          · Gasto máximo para terminar com 10M: <strong>~R$ 571.238/mês</strong>.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Gasto Máximo Sustentável</div>
+          <div class="card-subtitle">Quanto poderia gastar em cada idade de FIRE para terminar com R$ 10M</div>
+        </div>
+        <span class="pill">Base real · até 90 anos</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="spendChart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer-note">
+    Este dashboard resume o seu plano FIRE com base em:
+    patrimônio atual de <strong>R$ 5,5M</strong>, poupança mensal de <strong>R$ 200k</strong>,
+    retorno real de <strong>5% a.a.</strong>, venda de cotas no FIRE de <strong>R$ 13M</strong>,
+    presente de <strong>R$ 3M</strong> aos 60 anos e objetivo de terminar aos 90 anos
+    com <strong>R$ 10M</strong>. Os números de gasto máximo seguem a lógica do
+    <strong>Die With Zero</strong>, priorizando consumo ao longo da vida com segurança.
+  </div>
+</main>
+
+<script>
+  const fireAges = [50, 52, 55, 60, 65];
+  const wealthAtFire = [30307650, 37133950, 48707440, 72190760, 102162070];
+  const maxSpend = [127908, 161349, 220764, 353047, 571238];
+
+  const wealthAtFireMillions = wealthAtFire.map(v => v / 1_000_000);
+  const maxSpendK = maxSpend.map(v => v / 1000);
+
+  const chartDefaults = {
+    color: '#9ca3af',
+    borderColor: 'rgba(55,65,81,0.6)',
+  };
+
+  // Chart 1 – Patrimônio no FIRE
+  const ctxWealth = document.getElementById('wealthFireChart').getContext('2d');
+  new Chart(ctxWealth, {
+    type: 'bar',
+    data: {
+      labels: fireAges.map(a => a + " anos"),
+      datasets: [{
+        label: 'Patrimônio no FIRE (R$ milhões)',
+        data: wealthAtFireMillions,
+        backgroundColor: fireAges.map((_, i) => i === 1
+          ? 'rgba(74, 222, 128, 0.5)'
+          : 'rgba(74, 222, 128, 0.2)'),
+        borderColor: fireAges.map((_, i) => i === 1
+          ? '#4ade80'
+          : 'rgba(74, 222, 128, 0.5)'),
+        borderWidth: 1.8,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `R$ ${ctx.parsed.y.toFixed(1)} M`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: chartDefaults.color, font: { size: 11 } },
+          grid: { display: false }
+        },
+        y: {
+          ticks: {
+            color: chartDefaults.color,
+            callback: v => `R$ ${v} M`
+          },
+          grid: { color: chartDefaults.borderColor }
+        }
+      }
+    }
+  });
+
+  // Chart 2 – Gasto máximo sustentável
+  const ctxSpend = document.getElementById('spendChart').getContext('2d');
+  new Chart(ctxSpend, {
+    type: 'line',
+    data: {
+      labels: fireAges.map(a => a + " anos"),
+      datasets: [{
+        label: 'Gasto máximo (R$ mil/mês) para terminar com R$ 10M',
+        data: maxSpendK,
+        borderColor: '#4ade80',
+        backgroundColor: 'rgba(74, 222, 128, 0.08)',
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: fireAges.map((_, i) => i === 1 ? '#4ade80' : 'rgba(74,222,128,0.5)'),
+        pointBorderColor: '#4ade80',
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#e5e7eb',
+            font: { size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `R$ ${ctx.parsed.y.toFixed(1)} mil/mês`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: chartDefaults.color, font: { size: 11 } },
+          grid: { color: chartDefaults.borderColor }
+        },
+        y: {
+          ticks: {
+            color: chartDefaults.color,
+            callback: v => `R$ ${v.toFixed(0)}k/mês`
+          },
+          grid: { color: chartDefaults.borderColor }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
