@@ -324,11 +324,13 @@ function moneyInput(id, def) {
   el.value = numInt.format(raw);
 
   el.addEventListener('focus', function () {
-    this.value = raw === 0 ? '' : raw.toString();
     this.select();
   });
   el.addEventListener('input', function () {
-    raw = parseInt(this.value.replace(/\D/g, '') || '0', 10);
+    const digits = this.value.replace(/\D/g, '');
+    raw = parseInt(digits || '0', 10);
+    // Formata em tempo real mantendo cursor no fim
+    this.value = raw > 0 ? numInt.format(raw) : '';
     render();
   });
   el.addEventListener('blur', function () {
