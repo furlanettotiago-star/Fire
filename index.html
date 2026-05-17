@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard FIRE – Plano Tiago</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── tokens ─────────────────────────────────────────── */
+    :root {
+      --accent:      #4ade80;
+      --accent-soft: rgba(74,222,128,.18);
+      --accent-fg:   #022c22;
+      --border:      #1f2937;
+      --text:        #f9fafb;
+      --muted:       #9ca3af;
+      --radius:      14px;
+      --shadow:      0 18px 40px rgba(0,0,0,.6);
+      --grid-line:   rgba(55,65,81,.55);
+      --tick:        #9ca3af;
+    }
+
+    /* ── reset ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── base ────────────────────────────────────────────── */
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 50%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── layout ──────────────────────────────────────────── */
+    .wrap    { max-width: 1100px; margin: 0 auto; padding: 0 18px; }
+    .main    { padding: 18px 18px 42px; }
+    .mt      { margin-top: 16px; }
+    .grid    { display: grid; gap: 16px; }
+    @media (min-width: 900px) {
+      .grid-2 { grid-template-columns: 1.7fr 1.3fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* ── header ──────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(2,6,23,.96), rgba(2,6,23,.75));
+      border-bottom: 1px solid rgba(148,163,184,.22);
+    }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 10px 18px; max-width: 1100px; margin: 0 auto;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      background: radial-gradient(circle at 25% 20%, #4ade80, #22c55e);
+      display: grid; place-items: center;
+      font-weight: 800; font-size: .9rem; color: var(--accent-fg);
+    }
+    .brand-text        { display: flex; flex-direction: column; gap: 2px; }
+    .brand-text .sup   { font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    .brand-text .title { font-size: 1rem; font-weight: 600; }
+
+    .nav-end { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .tag {
+      font-size: .76rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+      border: 1px solid rgba(148,163,184,.35); color: var(--muted);
+    }
+    .tag strong { color: var(--accent); font-weight: 600; }
+
+    /* ── buttons ─────────────────────────────────────────── */
+    .btn-primary {
+      font: 600 .8rem/1 "Inter", sans-serif; padding: 7px 14px; border-radius: 999px;
+      background: var(--accent); color: var(--accent-fg); border: none;
+      cursor: pointer; white-space: nowrap; transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .82; }
+    .btn-ghost {
+      font: .82rem/1 "Inter", sans-serif; padding: 8px 16px; border-radius: 999px;
+      background: transparent; border: 1px solid rgba(148,163,184,.3);
+      color: var(--muted); cursor: pointer; transition: border-color .15s;
+    }
+    .btn-ghost:hover { border-color: rgba(148,163,184,.6); }
+
+    /* ── card ────────────────────────────────────────────── */
+    .card {
+      background: #020617; border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      padding: 14px 16px 16px; position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at top right, rgba(74,222,128,.09), transparent 60%);
+    }
+    .card-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 10px; gap: 8px;
+    }
+    .card-title    { font-size: .94rem; font-weight: 600; }
+    .card-subtitle { font-size: .76rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── pills ───────────────────────────────────────────── */
+    .pill {
+      font-size: .72rem; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+      background: rgba(15,23,42,.9); border: 1px solid rgba(148,163,184,.4); color: var(--muted);
+    }
+    .pill.green { background: var(--accent-soft); border-color: rgba(74,222,128,.4); color: var(--accent); }
+    .badge {
+      font-size: .7rem; padding: 2px 6px; border-radius: 6px; margin-left: 6px;
+      background: var(--accent-soft); color: var(--accent);
+    }
+
+    /* ── kpi ─────────────────────────────────────────────── */
+    .kpi-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+    .kpi-label { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+    .chips     { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      font-size: .76rem; padding: 4px 8px; border-radius: 999px;
+      background: rgba(15,23,42,.96); border: 1px solid rgba(148,163,184,.32); color: var(--muted);
+    }
+    .chip strong { color: var(--accent); font-weight: 600; }
+
+    /* ── timeline ────────────────────────────────────────── */
+    .tl-title { font-size: .82rem; font-weight: 600; margin: 12px 0 4px; }
+    .tl-row {
+      display: flex; justify-content: space-between; font-size: .76rem;
+      padding: 4px 0; border-bottom: 1px dashed rgba(55,65,81,.6);
+    }
+    .tl-row:last-child { border-bottom: none; }
+    .tl-label { color: var(--muted); }
+    .tl-val   { font-weight: 500; }
+
+    /* ── scenario ────────────────────────────────────────── */
+    .sc-kpi  { font-size: 1.05rem; font-weight: 600; margin-bottom: 2px; }
+    .sc-meta { font-size: .74rem; color: var(--muted); margin-bottom: 6px; }
+    .inner {
+      padding: 8px 10px; border-radius: 10px; margin-top: 6px;
+      border: 1px solid rgba(148,163,184,.28); background: rgba(15,23,42,.95);
+    }
+    .inner h4 { font-size: .8rem; margin-bottom: 3px; }
+    .inner p  { font-size: .74rem; color: var(--muted); line-height: 1.45; }
+    .inner strong { color: var(--accent); }
+
+    /* ── chart ───────────────────────────────────────────── */
+    .chart-wrap { position: relative; height: 220px; margin-top: 8px; }
+    .chart-wrap.sm { height: 180px; }
+
+    /* ── section note ────────────────────────────────────── */
+    .note { font-size: .76rem; color: var(--muted); margin-bottom: 6px; line-height: 1.45; }
+
+    /* ── footer ──────────────────────────────────────────── */
+    .footer {
+      margin-top: 18px; font-size: .76rem; color: var(--muted); line-height: 1.55;
+      border-top: 1px dashed rgba(55,65,81,.6); padding-top: 10px;
+    }
+    .footer strong { color: var(--accent); }
+
+    /* ── modal ───────────────────────────────────────────── */
+    .modal {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal[hidden] { display: none; }
+    .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+    }
+    .modal-box {
+      position: relative; z-index: 1; background: #0f172a;
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;
+      width: min(440px, calc(100vw - 32px));
+      box-shadow: 0 30px 60px rgba(0,0,0,.9);
+    }
+    .modal-title    { font-size: 1.1rem; font-weight: 600; margin-bottom: 3px; }
+    .modal-subtitle { font-size: .78rem; color: var(--muted); margin-bottom: 18px; }
+    .field         { margin-bottom: 14px; }
+    .field label   { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
+    .field input {
+      width: 100%; background: rgba(2,6,23,.8); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; color: var(--text);
+      font: .93rem/1 "Inter", sans-serif; outline: none; transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+    /* ── toast ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent); color: var(--accent-fg);
+      font: 600 .82rem/1 "Inter", sans-serif; padding: 10px 20px;
+      border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      z-index: 300; transition: transform .3s cubic-bezier(.34,1.56,.64,1); white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- header -->
+<header>
+  <nav>
+    <div class="brand">
+      <div class="logo">TF</div>
+      <div class="brand-text">
+        <span class="sup">Plano FIRE</span>
+        <span class="title">Dashboard – Patrimônio &amp; Liberdade</span>
+      </div>
+    </div>
+    <div class="nav-end">
+      <div class="tag">Idade atual: <strong>46 anos</strong></div>
+      <div class="tag">Alvo: <strong>FIRE 50–52</strong></div>
+      <div class="tag">Herança aos 90: <strong>R$ 10M</strong></div>
+      <button class="btn-primary" onclick="openModal()">+ Atualizar Saldo</button>
+    </div>
+  </nav>
+</header>
+
+<!-- modal -->
+<div class="modal" id="modal" hidden>
+  <div class="overlay" id="overlay"></div>
+  <div class="modal-box">
+    <div class="modal-title">Atualizar Saldo</div>
+    <div class="modal-subtitle">Registre o patrimônio atual para recalcular todas as projeções.</div>
+    <div class="field">
+      <label for="iBalance">Patrimônio atual (R$)</label>
+      <input type="number" id="iBalance" step="1000" min="0" />
+    </div>
+    <div class="field">
+      <label for="iDate">Data do registro</label>
+      <input type="date" id="iDate" />
+    </div>
+    <div class="field">
+      <label for="iNote">Observação (opcional)</label>
+      <input type="text" id="iNote" placeholder="Ex.: pós declaração IR" maxlength="80" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="handleSave()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast">Saldo atualizado ✓</div>
+
+<!-- main -->
+<main class="wrap main">
+
+  <!-- row 1: snapshot + wealth chart -->
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Snapshot do Plano</div>
+          <div class="card-subtitle">Situação atual e principais premissas</div>
+        </div>
+        <span class="pill">Die With Zero · FIRE</span>
+      </div>
+      <div class="kpi-value" id="snapBalance"></div>
+      <div class="kpi-label">Patrimônio financeiro atual investido (base real)</div>
+      <div class="chips">
+        <div class="chip">Poupança mensal até FIRE: <strong>R$ 200.000</strong></div>
+        <div class="chip">Retorno real alvo: <strong>5% ao ano</strong></div>
+        <div class="chip">Venda de cotas no FIRE: <strong>+R$ 13.000.000</strong></div>
+        <div class="chip">Presente aos filhos aos 60: <strong>R$ 3.000.000</strong></div>
+        <div class="chip">Gasto padrão pós-FIRE: <strong>R$ 120k → 80k/mês</strong></div>
+      </div>
+      <div class="tl-title">Linha do tempo chave</div>
+      <div id="timelineRows"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Curva de Patrimônio – Cenários FIRE</div>
+          <div class="card-subtitle">Patrimônio estimado no momento do FIRE (com 13M)</div>
+        </div>
+        <span class="pill">50 · 52 · 55 · 60 · 65</span>
+      </div>
+      <div class="chart-wrap"><canvas id="wealthChart"></canvas></div>
+    </section>
+  </div>
+
+  <!-- row 2: FIRE 50 / 52 / 55 -->
+  <div class="grid grid-3 mt" id="cards3"></div>
+
+  <!-- row 3: late fire + spend chart -->
+  <div class="grid grid-2 mt">
+    <section class="card" id="lateCard"></section>
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Gasto Máximo Sustentável</div>
+          <div class="card-subtitle">Quanto poderia gastar em cada cenário FIRE para terminar com R$ 10M</div>
+        </div>
+        <span class="pill">Base real · até 90 anos</span>
+      </div>
+      <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+    </section>
+  </div>
+
+  <!-- row 4: history (hidden until 2+ entries) -->
+  <div class="mt" id="historySection" style="display:none">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Evolução do Patrimônio</div>
+          <div class="card-subtitle">Histórico de atualizações mensais</div>
+        </div>
+        <span class="pill" id="histCount"></span>
+      </div>
+      <div class="chart-wrap sm"><canvas id="histChart"></canvas></div>
+    </section>
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+    Este dashboard resume o seu plano FIRE com base em:
+    patrimônio atual de <strong id="footerBal"></strong>, poupança mensal de <strong>R$ 200k</strong>,
+    retorno real de <strong>5% a.a.</strong>, venda de cotas no FIRE de <strong>R$ 13M</strong>,
+    presente de <strong>R$ 3M</strong> aos 60 anos e objetivo de terminar aos 90 anos
+    com <strong>R$ 10M</strong>. Os números de gasto máximo seguem a lógica do
+    <strong>Die With Zero</strong>, priorizando consumo ao longo da vida com segurança.<span
+      id="lastUpdatedWrap" style="display:none"> · Última atualização: <strong id="lastUpdatedDate"></strong></span>
+  </div>
+</main>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   PLAN CONFIGURATION
+───────────────────────────────────────────────────────────── */
+const PLAN = {
+  currentAge:      46,
+  annualReturn:    0.05,
+  monthlySavings:  200_000,
+  cotaSale:        13_000_000,
+  giftAge:         60,
+  giftAmount:      3_000_000,
+  phaseChangeAge:  70,        // spending drops at this age
+  spend1:          120_000,   // R$/month: FIRE to phaseChangeAge
+  spend2:          80_000,    // R$/month: phaseChangeAge to 90
+  legacyAge:       90,
+  legacyTarget:    10_000_000,
+  scenarios:       [50, 52, 55, 60, 65],
+  recommended:     52,
+};
+
+/* ─────────────────────────────────────────────────────────────
+   STATE  (persisted in localStorage)
+───────────────────────────────────────────────────────────── */
+const STORE_KEY = 'fire-plan-tiago-v1';
+
+let state = {
+  balance: 5_500_000,
+  history: [],   // [{ date: 'YYYY-MM-DD', balance: number, note: string }]
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch (_) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FINANCIAL MODEL
+───────────────────────────────────────────────────────────── */
+const rm = Math.pow(1 + PLAN.annualReturn, 1 / 12) - 1;   // monthly rate
+
+// Future value of lump-sum + regular deposits over n months
+function fv(principal, deposit, months) {
+  const g = Math.pow(1 + rm, months);
+  return principal * g + deposit * (g - 1) / rm;
+}
+
+// Wealth when retiring at fireAge, given current balance
+function wealthAtFire(balance, fireAge) {
+  const months = (fireAge - PLAN.currentAge) * 12;
+  return fv(balance, PLAN.monthlySavings, months) + PLAN.cotaSale;
+}
+
+// Simulate the standard spending scenario (120k→80k) to find balance at 90
+function finalBalance(w, fireAge) {
+  let b = w;
+  const { giftAge, giftAmount, phaseChangeAge, spend1, spend2, legacyAge } = PLAN;
+
+  // helper: advance b through 'months' of withdrawing 'spend'/month
+  function step(months, spend) {
+    const g = Math.pow(1 + rm, months);
+    b = b * g - spend * (g - 1) / rm;
+  }
+
+  if (fireAge < giftAge) {
+    step((giftAge - fireAge) * 12, spend1);
+    b -= giftAmount;
+    step((phaseChangeAge - giftAge) * 12, spend1);
+  } else if (fireAge === giftAge) {
+    b -= giftAmount;
+    step((phaseChangeAge - fireAge) * 12, spend1);
+  } else if (fireAge < phaseChangeAge) {
+    step((phaseChangeAge - fireAge) * 12, spend1);
+  }
+
+  step((legacyAge - Math.max(fireAge, phaseChangeAge)) * 12, spend2);
+  return b;
+}
+
+// Max monthly withdrawal to end at legacyTarget at legacyAge (Die With Zero)
+function maxSpend(w, fireAge) {
+  const { giftAge, giftAmount, annualReturn, legacyAge, legacyTarget } = PLAN;
+  const months = (legacyAge - fireAge) * 12;
+  const af = (1 - Math.pow(1 + rm, -months)) / rm;
+
+  const giftPV = fireAge <= giftAge
+    ? giftAmount / Math.pow(1 + annualReturn, giftAge - fireAge)
+    : 0;
+  const legacyPV = legacyTarget / Math.pow(1 + annualReturn, legacyAge - fireAge);
+
+  return (w - giftPV - legacyPV) / af;
+}
+
+function computeAll(balance) {
+  return PLAN.scenarios.map(age => {
+    const w = wealthAtFire(balance, age);
+    return { age, w, spend: maxSpend(w, age), end: finalBalance(w, age) };
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FORMATTING
+───────────────────────────────────────────────────────────── */
+const brlFmt  = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const brl = n => brlFmt.format(n);
+
+function fmtM(n) {
+  const m = n / 1e6;
+  return `R$ ${m >= 100 ? m.toFixed(0) : m.toFixed(1)}M`;
+}
+function fmtK(n) {
+  const k = n / 1000;
+  return `R$ ${k >= 100 ? Math.round(k) : k.toFixed(1)}k`;
+}
+function fmtDate(iso) {
+  return new Date(iso + 'T12:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CHART INSTANCES  (created once, updated on re-render)
+───────────────────────────────────────────────────────────── */
+let charts = {};
+
+const C = {
+  accent:    '#4ade80',
+  accentDim: 'rgba(74,222,128,.25)',
+  fill:      'rgba(74,222,128,.08)',
+  grid:      'rgba(55,65,81,.55)',
+  tick:      '#9ca3af',
+};
+
+function scaleX(noGrid = false) {
+  return {
+    ticks: { color: C.tick, font: { size: 11 } },
+    grid:  noGrid ? { display: false } : { color: C.grid },
+  };
+}
+function scaleY(cb) {
+  return {
+    ticks: { color: C.tick, font: { size: 11 }, callback: cb },
+    grid:  { color: C.grid },
+  };
+}
+
+function makeOrUpdate(id, config) {
+  if (charts[id]) {
+    const ch = charts[id];
+    const ds = config.data.datasets[0];
+    ch.data.datasets[0].data = ds.data;
+    if (ds.backgroundColor) ch.data.datasets[0].backgroundColor = ds.backgroundColor;
+    if (ds.borderColor)      ch.data.datasets[0].borderColor      = ds.borderColor;
+    if (ds.pointBackgroundColor) ch.data.datasets[0].pointBackgroundColor = ds.pointBackgroundColor;
+    ch.update();
+  } else {
+    charts[id] = new Chart(document.getElementById(id), config);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────────────────────── */
+const LABELS = {
+  50: ['FIRE aos 50', 'Aposentadoria agressiva, folga moderada',  'Cenário antecipado'],
+  52: ['FIRE aos 52', 'Equilíbrio entre tempo e segurança',       'Sweet spot'],
+  55: ['FIRE aos 55', 'Maior robustez, altíssimo conforto',       'Muito conservador'],
+  60: ['FIRE aos 60', 'Acúmulo avançado',                         'Tardio'],
+  65: ['FIRE aos 65', 'Patrimônio extremo',                       'Overkill'],
+};
+
+function renderSnapshot(scenarios) {
+  document.getElementById('snapBalance').textContent = brl(state.balance);
+  document.getElementById('footerBal').textContent  = fmtM(state.balance);
+
+  const today = `<div class="tl-row"><span class="tl-label">Hoje</span><span class="tl-val">${PLAN.currentAge} anos · Fase de acumulação</span></div>`;
+  const rows  = scenarios.map(s =>
+    `<div class="tl-row">
+       <span class="tl-label">FIRE ${s.age}</span>
+       <span class="tl-val">${fmtM(s.w)} · Gasto máx.: ~${fmtK(s.spend)}/mês</span>
+     </div>`
+  ).join('');
+  document.getElementById('timelineRows').innerHTML = today + rows;
+}
+
+function scenarioCard(s) {
+  const [title, subtitle, pillLabel] = LABELS[s.age];
+  const rec    = s.age === PLAN.recommended;
+  const badge  = rec ? '<span class="badge">Recomendado</span>' : '';
+  const pill   = rec ? 'pill green' : 'pill';
+  return `<section class="card">
+    <div class="card-header">
+      <div><div class="card-title">${title}</div><div class="card-subtitle">${subtitle}</div></div>
+      <span class="${pill}">${pillLabel}</span>
+    </div>
+    <div class="sc-kpi">${brl(s.w)} no FIRE${badge}</div>
+    <div class="sc-meta">Com o gasto padrão (120k→80k/mês), você termina com ~${fmtM(s.end)} aos 90.</div>
+    <div class="inner">
+      <h4>Gasto máximo (Die With Zero):</h4>
+      <p>Para terminar com R$ 10M aos 90, o gasto sustentável seria de aproximadamente
+         <strong>${brl(s.spend)}/mês</strong>.</p>
+    </div>
+  </section>`;
+}
+
+function renderCards(scenarios) {
+  document.getElementById('cards3').innerHTML = scenarios.slice(0, 3).map(scenarioCard).join('');
+
+  const s60 = scenarios[3], s65 = scenarios[4];
+  document.getElementById('lateCard').innerHTML = `
+    <div class="card-header">
+      <div><div class="card-title">FIRE tardio (60 / 65)</div><div class="card-subtitle">Acúmulo extremo de patrimônio</div></div>
+      <span class="pill">Overkill</span>
+    </div>
+    <p class="note">FIRE muito tardio leva a um patrimônio que dificilmente será consumido em vida, contrariando a filosofia de
+      <strong style="color:var(--accent)">Die With Zero</strong> — otimizar o uso do dinheiro enquanto há energia.</p>
+    <div class="inner">
+      <h4>FIRE aos 60</h4>
+      <p>· Patrimônio no FIRE: <strong>${brl(s60.w)}</strong><br>
+         · Patrimônio aos 90 (gasto padrão): ~<strong>${fmtM(s60.end)}</strong><br>
+         · Gasto máximo para terminar com R$ 10M: <strong>${brl(s60.spend)}/mês</strong></p>
+    </div>
+    <div class="inner" style="margin-top:8px">
+      <h4>FIRE aos 65</h4>
+      <p>· Patrimônio no FIRE: <strong>${brl(s65.w)}</strong><br>
+         · Patrimônio aos 90 (gasto padrão): ~<strong>${fmtM(s65.end)}</strong><br>
+         · Gasto máximo para terminar com R$ 10M: <strong>${brl(s65.spend)}/mês</strong></p>
+    </div>`;
+}
+
+function renderCharts(scenarios) {
+  const labels  = scenarios.map(s => s.age + ' anos');
+  const wealthM = scenarios.map(s => s.w / 1e6);
+  const spendK  = scenarios.map(s => s.spend / 1000);
+  const barBg   = scenarios.map(s => s.age === PLAN.recommended ? 'rgba(74,222,128,.5)' : C.accentDim);
+  const barBdr  = scenarios.map(s => s.age === PLAN.recommended ? C.accent : 'rgba(74,222,128,.45)');
+  const ptBg    = scenarios.map(s => s.age === PLAN.recommended ? C.accent : 'rgba(74,222,128,.45)');
+
+  makeOrUpdate('wealthChart', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: wealthM, backgroundColor: barBg, borderColor: barBdr,
+        borderWidth: 1.8, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => `R$ ${c.parsed.y.toFixed(1)} M` } },
+      },
+      scales: {
+        x: scaleX(true),
+        y: scaleY(v => `R$ ${v} M`),
+      },
+    },
+  });
+
+  makeOrUpdate('spendChart', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Gasto máximo (R$ mil/mês) para terminar com R$ 10M',
+        data: spendK, borderColor: C.accent, backgroundColor: C.fill,
+        borderWidth: 2, tension: 0.35, fill: true,
+        pointRadius: 4, pointBackgroundColor: ptBg, pointBorderColor: C.accent,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e5e7eb', font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => `R$ ${c.parsed.y.toFixed(1)} mil/mês` } },
+      },
+      scales: {
+        x: scaleX(),
+        y: scaleY(v => `R$ ${v.toFixed(0)}k/mês`),
+      },
+    },
+  });
+}
+
+function renderHistory() {
+  const { history } = state;
+  const section = document.getElementById('historySection');
+
+  if (history.length < 2) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  document.getElementById('histCount').textContent = `${history.length} registros`;
+
+  const labels = history.map(h => fmtDate(h.date));
+  const data   = history.map(h => h.balance / 1e6);
+
+  if (charts.histChart) {
+    charts.histChart.data.labels = labels;
+    charts.histChart.data.datasets[0].data = data;
+    charts.histChart.update();
+  } else {
+    charts.histChart = new Chart(document.getElementById('histChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Patrimônio registrado (R$ milhões)',
+          data, borderColor: C.accent, backgroundColor: C.fill,
+          borderWidth: 2, tension: 0.3, fill: true,
+          pointRadius: 4, pointBackgroundColor: C.accent,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => `R$ ${c.parsed.y.toFixed(2)} M` } },
+        },
+        scales: {
+          x: scaleX(true),
+          y: scaleY(v => `R$ ${v.toFixed(1)} M`),
+        },
+      },
+    });
+  }
+
+  // last updated note in footer
+  const last = history[history.length - 1];
+  document.getElementById('lastUpdatedWrap').style.display = '';
+  document.getElementById('lastUpdatedDate').textContent   = fmtDate(last.date);
+}
+
+function renderAll() {
+  const scenarios = computeAll(state.balance);
+  renderSnapshot(scenarios);
+  renderCards(scenarios);
+  renderCharts(scenarios);
+  renderHistory();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODAL
+───────────────────────────────────────────────────────────── */
+function openModal() {
+  document.getElementById('iBalance').value = state.balance;
+  document.getElementById('iDate').value    = new Date().toISOString().slice(0, 10);
+  document.getElementById('iNote').value    = '';
+  document.getElementById('modal').removeAttribute('hidden');
+  const inp = document.getElementById('iBalance');
+  inp.focus(); inp.select();
+}
+
+function closeModal() {
+  document.getElementById('modal').setAttribute('hidden', '');
+}
+
+function handleSave() {
+  const balance = parseFloat(document.getElementById('iBalance').value);
+  if (!balance || balance <= 0) { document.getElementById('iBalance').focus(); return; }
+
+  const date = document.getElementById('iDate').value || new Date().toISOString().slice(0, 10);
+  const note = document.getElementById('iNote').value.trim();
+
+  state.balance = balance;
+  state.history.push({ date, balance, note });
+  saveState();
+  closeModal();
+  renderAll();
+  showToast('Saldo atualizado ✓');
+}
+
+document.getElementById('overlay').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && !document.getElementById('modal').hasAttribute('hidden')) handleSave();
+});
+
+/* ─────────────────────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────────────────────── */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────────────────────── */
+loadState();
+renderAll();
+</script>
+</body>
+</html>
