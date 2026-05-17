@@ -121,6 +121,17 @@
     .leg-vline { width: 2px; height: 12px; background: var(--orange); opacity: .7; flex-shrink: 0; }
     .chart-wrap { position: relative; height: 360px; width: 100%; }
 
+    /* ── derived rows ───────────────────────── */
+    .derived-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 10px; border-radius: 6px; margin-bottom: 8px;
+      background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.15);
+    }
+    .derived-lbl { font-size: .68rem; color: var(--muted2); }
+    .derived-val { font-size: .82rem; font-weight: 700; }
+    .derived-val.g { color: var(--accent); }
+    .derived-val.o { color: var(--orange); }
+
     /* ── footer note ─────────────────────────── */
     .foot {
       font-size: .69rem; color: var(--muted); line-height: 1.6;
@@ -175,13 +186,37 @@
       </div>
     </div>
 
-    <div class="sec">Renda mensal (pré-FIRE)</div>
+    <div class="sec">Empresa (pré-FIRE)</div>
     <div class="field">
-      <label>Salário + dividendos</label>
+      <label>Receita anual da empresa</label>
       <div class="iw">
         <span class="pre">R$</span>
-        <input type="text" inputmode="numeric" id="iIncome" class="pl" />
+        <input type="text" inputmode="numeric" id="iRevenue" class="pl" />
       </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Suas cotas</label>
+        <div class="iw">
+          <input type="number" id="iCotaPct" value="23" min="0" max="100" step="0.1" class="pr" />
+          <span class="suf">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Payout</label>
+        <div class="iw">
+          <input type="number" id="iPayoutPct" value="50" min="0" max="100" step="1" class="pr" />
+          <span class="suf">%</span>
+        </div>
+      </div>
+    </div>
+    <div class="derived-row">
+      <span class="derived-lbl">Renda mensal calculada</span>
+      <span class="derived-val g" id="dIncome">—</span>
+    </div>
+    <div class="derived-row">
+      <span class="derived-lbl">Retido na empresa / ano</span>
+      <span class="derived-val g" id="dRetained">—</span>
     </div>
 
     <hr class="sep" />
@@ -197,11 +232,15 @@
       </div>
     </div>
     <div class="field">
-      <label>Valor recebido na venda das cotas</label>
+      <label>Valor atual das cotas (hoje)</label>
       <div class="iw">
         <span class="pre">R$</span>
-        <input type="text" inputmode="numeric" id="iCota" class="pl" />
+        <input type="text" inputmode="numeric" id="iCotaValue" class="pl" />
       </div>
+    </div>
+    <div class="derived-row" style="background:rgba(251,146,60,.07);border-color:rgba(251,146,60,.2)">
+      <span class="derived-lbl">Projeção das cotas no FIRE</span>
+      <span class="derived-val o" id="dCota">—</span>
     </div>
 
     <hr class="sep" />
@@ -341,10 +380,10 @@ function moneyInput(id, def) {
 }
 
 // Inicializa inputs monetários com valores padrão
-moneyInput('iCapital', 5_500_000);
-moneyInput('iIncome',   200_000);
-moneyInput('iCota',  13_000_000);
-moneyInput('iS1',       120_000);
+moneyInput('iCapital',   5_500_000);
+moneyInput('iRevenue',  15_000_000);
+moneyInput('iCotaValue',16_000_000);
+moneyInput('iS1',          120_000);
 moneyInput('iS2',        80_000);
 moneyInput('iS3',        50_000);
 
@@ -355,15 +394,26 @@ function P() {
   const age   = +$('iAge').value   || 46;
   const death = +$('iDeath').value || 90;
   const fire  = Math.min(Math.max(+$('iFire').value || 52, age + 1), death - 1);
+
+  const revenue      = vals['iRevenue']();
+  const cotaPct      = (+$('iCotaPct').value   || 23) / 100;
+  const payoutPct    = (+$('iPayoutPct').value || 50) / 100;
+  const income       = revenue * cotaPct * payoutPct / 12;
+  const retainedYear = revenue * cotaPct * (1 - payoutPct);
+
+  const cotaValue = vals['iCotaValue']();
+  const cota      = cotaValue + retainedYear * (fire - age);
+
   return {
     age, death, fire,
     capital: vals['iCapital'](),
-    ret:     (+$('iReturn').value  || 5) / 100,
-    income:  vals['iIncome'](),
-    cota:    vals['iCota'](),
-    s1:      vals['iS1'](),
-    s2:      vals['iS2'](),
-    s3:      vals['iS3'](),
+    ret:     (+$('iReturn').value || 5) / 100,
+    income,
+    cota,
+    retainedYear,
+    s1: vals['iS1'](),
+    s2: vals['iS2'](),
+    s3: vals['iS3'](),
   };
 }
 
@@ -559,8 +609,13 @@ function render() {
   const p = P();
 
   // Atualiza label dinâmico da Fase 1
-  $('lblF1').textContent  = `Fase 1 – ${p.age} a 60 anos`;
+  $('lblF1').textContent     = `Fase 1 – ${p.age} a 60 anos`;
   $('footDeath').textContent = p.death;
+
+  // Derived: renda mensal e projeção das cotas
+  $('dIncome').textContent   = brlInt.format(Math.round(p.income));
+  $('dRetained').textContent = fmtM(p.retainedYear);
+  $('dCota').textContent     = fmtM(p.cota);
 
   // Simula a linha do gasto padrão
   const line1     = simulate(p, null);
@@ -602,7 +657,7 @@ function render() {
 /* ═══════════════════════════════════════════════════════
    EVENTOS E INICIALIZAÇÃO
 ═══════════════════════════════════════════════════════ */
-['iAge', 'iDeath', 'iReturn', 'iFire'].forEach(id =>
+['iAge', 'iDeath', 'iReturn', 'iFire', 'iCotaPct', 'iPayoutPct'].forEach(id =>
   $(id).addEventListener('input', render)
 );
 
