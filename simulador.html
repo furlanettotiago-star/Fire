@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ── tokens ─────────────────────────────── */
     :root {
       --bg:          #020617;
       --card:        #0c1222;
@@ -18,18 +17,15 @@
       --blue:        #60a5fa;
       --orange:      #fb923c;
       --orange-soft: rgba(251,146,60,.13);
+      --red:         #f87171;
       --text:        #f1f5f9;
       --muted:       #475569;
       --muted2:      #94a3b8;
       --radius:      12px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg); color: var(--text); min-height: 100vh;
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* ── header ──────────────────────────────── */
     .hdr {
       padding: 14px 24px; border-bottom: 1px solid var(--border);
       display: flex; align-items: center; gap: 12px;
@@ -40,22 +36,18 @@
     .hdr h1 em { font-style: normal; color: var(--accent); }
     .hdr-badge {
       font-size: .67rem; padding: 3px 9px; border-radius: 999px; font-weight: 600;
-      background: var(--accent-soft); color: var(--accent);
-      border: 1px solid rgba(74,222,128,.28);
+      background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(74,222,128,.28);
     }
 
-    /* ── layout ──────────────────────────────── */
     .layout { display: grid; grid-template-columns: 296px 1fr; min-height: calc(100vh - 52px); }
     @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
 
-    /* ── sidebar ─────────────────────────────── */
     .sidebar {
       border-right: 1px solid var(--border); padding: 16px 14px 32px;
       overflow-y: auto; background: var(--card);
     }
     .sec { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--orange); margin: 18px 0 8px; }
     .sec:first-child { margin-top: 0; }
-
     .field { margin-bottom: 8px; }
     .field label { display: block; font-size: .7rem; color: var(--muted2); margin-bottom: 3px; }
     .iw { position: relative; }
@@ -63,7 +55,7 @@
       position: absolute; top: 50%; transform: translateY(-50%);
       font-size: .72rem; font-weight: 600; pointer-events: none;
     }
-    .iw .pre { left: 9px;  color: var(--accent); }
+    .iw .pre { left: 9px; color: var(--accent); }
     .iw .suf { right: 9px; color: var(--muted2); }
     .iw input {
       width: 100%; background: rgba(2,6,23,.7); border: 1px solid var(--border);
@@ -77,35 +69,36 @@
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .sep  { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
 
-    /* ── main ────────────────────────────────── */
+    .derived-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 10px; border-radius: 6px; margin-bottom: 8px;
+      background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.15);
+    }
+    .derived-row.o { background: rgba(251,146,60,.07); border-color: rgba(251,146,60,.2); }
+    .derived-lbl { font-size: .68rem; color: var(--muted2); }
+    .derived-val { font-size: .82rem; font-weight: 700; }
+    .derived-val.g { color: var(--accent); }
+    .derived-val.o { color: var(--orange); }
+
     .main { padding: 16px 18px 32px; display: flex; flex-direction: column; gap: 13px; }
 
-    /* ── kpis ────────────────────────────────── */
     .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 11px; }
     @media (max-width: 640px) { .kpis { grid-template-columns: 1fr 1fr; } }
-    .kpi {
-      background: var(--card2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 13px 15px;
-    }
+    .kpi { background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; }
     .kpi-lbl { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 6px; }
     .kpi-val { font-size: 1.2rem; font-weight: 700; line-height: 1.1; }
     .kpi-val.g { color: var(--accent); }
     .kpi-val.b { color: var(--blue); }
     .kpi-val.o { color: var(--orange); }
-    .kpi-sub   { font-size: .67rem; color: var(--muted2); margin-top: 3px; }
+    .kpi-sub { font-size: .67rem; color: var(--muted2); margin-top: 3px; }
 
-    /* ── warning ─────────────────────────────── */
     .warn {
       display: none; padding: 10px 14px; border-radius: 8px; font-size: .75rem;
       background: var(--orange-soft); border: 1px solid rgba(251,146,60,.32); color: var(--orange);
     }
     .warn.on { display: block; }
 
-    /* ── chart card ──────────────────────────── */
-    .chart-card {
-      background: var(--card2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 15px; flex: 1;
-    }
+    .chart-card { background: var(--card2); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px; }
     .chart-top {
       display: flex; align-items: flex-start; justify-content: space-between;
       margin-bottom: 13px; gap: 10px; flex-wrap: wrap;
@@ -114,25 +107,17 @@
     .chart-subtitle { font-size: .7rem; color: var(--muted2); margin-top: 2px; }
     .legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
     .leg { display: flex; align-items: center; gap: 5px; font-size: .69rem; color: var(--muted2); }
-    .leg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .leg-line {
-      width: 18px; height: 0; border-top: 2px dashed var(--blue); flex-shrink: 0;
-    }
+    .leg-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .leg-line  { width: 18px; height: 0; border-top: 2px dashed var(--blue); flex-shrink: 0; }
     .leg-vline { width: 2px; height: 12px; background: var(--orange); opacity: .7; flex-shrink: 0; }
-    .chart-wrap { position: relative; height: 360px; width: 100%; }
 
-    /* ── derived rows ───────────────────────── */
-    .derived-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 10px; border-radius: 6px; margin-bottom: 8px;
-      background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.15);
-    }
-    .derived-lbl { font-size: .68rem; color: var(--muted2); }
-    .derived-val { font-size: .82rem; font-weight: 700; }
-    .derived-val.g { color: var(--accent); }
-    .derived-val.o { color: var(--orange); }
+    .chart-wrap       { position: relative; height: 360px; width: 100%; }
+    .chart-wrap-sm    { position: relative; height: 280px; width: 100%; }
+    .chart-wrap-donut { position: relative; height: 260px; width: 100%; }
 
-    /* ── footer note ─────────────────────────── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
     .foot {
       font-size: .69rem; color: var(--muted); line-height: 1.6;
       border-top: 1px solid var(--border); padding-top: 10px;
@@ -149,7 +134,6 @@
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
 
     <div class="sec">Você</div>
@@ -238,7 +222,7 @@
         <input type="text" inputmode="numeric" id="iCotaValue" class="pl" />
       </div>
     </div>
-    <div class="derived-row" style="background:rgba(251,146,60,.07);border-color:rgba(251,146,60,.2)">
+    <div class="derived-row o">
       <span class="derived-lbl">Projeção das cotas no FIRE</span>
       <span class="derived-val o" id="dCota">—</span>
     </div>
@@ -270,7 +254,6 @@
 
   </aside>
 
-  <!-- MAIN -->
   <div class="main">
 
     <div class="kpis">
@@ -293,6 +276,7 @@
 
     <div class="warn" id="warn"></div>
 
+    <!-- Gráfico 1: Evolução do Patrimônio -->
     <div class="chart-card">
       <div class="chart-top">
         <div>
@@ -305,9 +289,67 @@
           <div class="leg"><div class="leg-vline"></div>Data FIRE</div>
         </div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="chart"></canvas>
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+    </div>
+
+    <!-- Linha 2: Sensibilidade FIRE + Composição -->
+    <div class="charts-grid">
+
+      <div class="chart-card">
+        <div class="chart-top">
+          <div>
+            <div class="chart-title">Sensibilidade da Data do FIRE</div>
+            <div class="chart-subtitle">Patrimônio acumulado por idade de aposentadoria</div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartSens"></canvas></div>
       </div>
+
+      <div class="chart-card">
+        <div class="chart-top">
+          <div>
+            <div class="chart-title">Composição do Patrimônio no FIRE</div>
+            <div class="chart-subtitle">De onde vem o capital na data da saída</div>
+          </div>
+        </div>
+        <div class="chart-wrap-donut"><canvas id="chartComp"></canvas></div>
+      </div>
+
+    </div>
+
+    <!-- Linha 3: Retorno real + Fluxo de caixa -->
+    <div class="charts-grid">
+
+      <div class="chart-card">
+        <div class="chart-top">
+          <div>
+            <div class="chart-title">Cenários de Retorno Real</div>
+            <div class="chart-subtitle">Impacto da taxa de juros sobre o patrimônio</div>
+          </div>
+          <div class="legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>3%</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--accent)"></div>Base</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>8%</div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartRet"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-top">
+          <div>
+            <div class="chart-title">Fluxo de Caixa Anual</div>
+            <div class="chart-subtitle">Entradas e saídas por ano (excl. rendimento)</div>
+          </div>
+          <div class="legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--accent)"></div>Renda</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--orange)"></div>Cotas</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Gastos</div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartFlow"></canvas></div>
+      </div>
+
     </div>
 
     <div class="foot">
@@ -321,75 +363,49 @@
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   FORMATAÇÃO  (padrão contábil pt-BR)
-═══════════════════════════════════════════════════════ */
-const ptBR = 'pt-BR';
-
-// R$ 5.500.000  (sem decimais)
+/* ── Formatação pt-BR ─────────────────────────────── */
+const ptBR  = 'pt-BR';
 const brlInt = new Intl.NumberFormat(ptBR, { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-
-// R$ 5.500.000,75  (com decimais)
-const brl2   = new Intl.NumberFormat(ptBR, { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-// 5.500.000  (número sem símbolo)
 const numInt = new Intl.NumberFormat(ptBR, { maximumFractionDigits: 0 });
 
-// Exibe em milhões com abreviatura, ex.: "R$ 30,3 M"
 function fmtM(n) {
   const abs  = Math.abs(n);
   const sign = n < 0 ? '−' : '';
   if (abs >= 1e9) return `${sign}R$ ${(abs/1e9).toLocaleString(ptBR, { maximumFractionDigits: 2 })} bi`;
   if (abs >= 1e6) return `${sign}R$ ${(abs/1e6).toLocaleString(ptBR, { maximumFractionDigits: 1 })} M`;
-  return (n < 0 ? '−' : '') + brlInt.format(abs);
+  return sign + brlInt.format(abs);
 }
-
-// Para gráfico: "R$ 30,31 M"
 function fmtMChart(n) {
-  const m = n / 1e6;
-  return `R$ ${m.toLocaleString(ptBR, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} M`;
+  return `R$ ${(n/1e6).toLocaleString(ptBR, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} M`;
 }
 
-/* ═══════════════════════════════════════════════════════
-   INPUTS MONETÁRIOS  (exibe formatado, edita em bruto)
-═══════════════════════════════════════════════════════ */
-const $ = id => document.getElementById(id);
-const vals = {};   // vals['iCapital'] → getter () => number
+/* ── Inputs monetários ────────────────────────────── */
+const $    = id => document.getElementById(id);
+const vals = {};
 
 function moneyInput(id, def) {
   const el = $(id);
   let raw = def;
-
   el.value = numInt.format(raw);
-
-  el.addEventListener('focus', function () {
-    this.select();
-  });
+  el.addEventListener('focus', function () { this.select(); });
   el.addEventListener('input', function () {
     const digits = this.value.replace(/\D/g, '');
     raw = parseInt(digits || '0', 10);
-    // Formata em tempo real mantendo cursor no fim
     this.value = raw > 0 ? numInt.format(raw) : '';
     render();
   });
-  el.addEventListener('blur', function () {
-    this.value = numInt.format(raw);
-  });
-
+  el.addEventListener('blur', function () { this.value = numInt.format(raw); });
   vals[id] = () => raw;
 }
 
-// Inicializa inputs monetários com valores padrão
-moneyInput('iCapital',   5_500_000);
-moneyInput('iRevenue',  15_000_000);
-moneyInput('iCotaValue',16_000_000);
-moneyInput('iS1',          120_000);
-moneyInput('iS2',        80_000);
-moneyInput('iS3',        50_000);
+moneyInput('iCapital',    5_500_000);
+moneyInput('iRevenue',   15_000_000);
+moneyInput('iCotaValue', 16_000_000);
+moneyInput('iS1',           120_000);
+moneyInput('iS2',            80_000);
+moneyInput('iS3',            50_000);
 
-/* ═══════════════════════════════════════════════════════
-   LÊ TODOS OS PARÂMETROS DO FORMULÁRIO
-═══════════════════════════════════════════════════════ */
+/* ── Parâmetros ───────────────────────────────────── */
 function P() {
   const age   = +$('iAge').value   || 46;
   const death = +$('iDeath').value || 90;
@@ -408,39 +424,22 @@ function P() {
     age, death, fire,
     capital: vals['iCapital'](),
     ret:     (+$('iReturn').value || 5) / 100,
-    income,
-    cota,
-    retainedYear,
+    income, cota, retainedYear, cotaValue,
     s1: vals['iS1'](),
     s2: vals['iS2'](),
     s3: vals['iS3'](),
   };
 }
 
-/* ═══════════════════════════════════════════════════════
-   MOTOR FINANCEIRO
-═══════════════════════════════════════════════════════ */
+/* ── Motor financeiro ─────────────────────────────── */
+const rm = r => Math.pow(1 + r, 1/12) - 1;
 
-// Taxa mensal equivalente à taxa real anual
-const rm = r => Math.pow(1 + r, 1 / 12) - 1;
-
-// Gasto mensal por fase de vida (independente do FIRE)
 function phaseSpend(age, p) {
   if (age < 60) return p.s1;
   if (age < 75) return p.s2;
   return p.s3;
 }
 
-/*
-  simulate(p, postFireSpend)
-  ──────────────────────────
-  Simula mês a mês do age até death.
-  Retorna um ponto por ano: [{ age, balance }]
-
-  Pré-FIRE : balance = balance × (1+rm) + income − gasto_fase
-  No FIRE  : balance += cota (uma vez)
-  Pós-FIRE : balance = balance × (1+rm) − gasto_fase  (ou postFireSpend fixo)
-*/
 function simulate(p, postFireSpend = null) {
   const rate  = rm(p.ret);
   let balance = p.capital;
@@ -449,28 +448,17 @@ function simulate(p, postFireSpend = null) {
 
   for (let m = 1, total = (p.death - p.age) * 12; m <= total; m++) {
     const curAge = p.age + m / 12;
-
     balance *= (1 + rate);
-
     if (!fired && curAge >= p.fire) { balance += p.cota; fired = true; }
     if (curAge < p.fire)            { balance += p.income; }
-
     balance -= (postFireSpend !== null && curAge >= p.fire)
       ? postFireSpend
       : phaseSpend(curAge, p);
-
     if (m % 12 === 0) out.push({ age: Math.round(p.age + m / 12), balance });
   }
-
   return out;
 }
 
-/*
-  calcDWZ(fireBalance, p)
-  ────────────────────────
-  Saque mensal constante que zera o patrimônio exatamente na data da morte.
-  Fórmula: PMT = PV × rm / (1 − (1+rm)^−n)
-*/
 function calcDWZ(fireBalance, p) {
   const rate = rm(p.ret);
   const n    = (p.death - p.fire) * 12;
@@ -478,12 +466,17 @@ function calcDWZ(fireBalance, p) {
   return fireBalance * rate / (1 - Math.pow(1 + rate, -n));
 }
 
-/* ═══════════════════════════════════════════════════════
-   GRÁFICO
-═══════════════════════════════════════════════════════ */
+/* ── Tooltip padrão ───────────────────────────────── */
+function tooltipBase() {
+  return {
+    backgroundColor: '#0f172a', borderColor: '#1e293b', borderWidth: 1,
+    titleColor: '#94a3b8', bodyColor: '#f1f5f9', padding: 10,
+  };
+}
+
+/* ── Gráfico 1 · Evolução do Patrimônio ───────────── */
 let ch = null;
 
-// Plugin inline: desenha linha vertical laranja na data do FIRE
 const fireLinePlugin = {
   id: 'fireVLine',
   afterDraw(chart, _args, opts) {
@@ -491,10 +484,8 @@ const fireLinePlugin = {
     const meta = chart.getDatasetMeta(0);
     const pt   = meta && meta.data[opts.idx];
     if (!pt) return;
-
     const { ctx, chartArea } = chart;
     const x = pt.x;
-
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(x, chartArea.top);
@@ -503,7 +494,6 @@ const fireLinePlugin = {
     ctx.lineWidth   = 1.5;
     ctx.setLineDash([5, 4]);
     ctx.stroke();
-
     ctx.fillStyle    = 'rgba(251,146,60,.85)';
     ctx.font         = '600 10px Inter, sans-serif';
     ctx.textAlign    = 'left';
@@ -514,46 +504,13 @@ const fireLinePlugin = {
 };
 
 function drawChart(line1, line2, fireAge) {
-  const labels  = line1.map(d => d.age);   // números: 46,47,...,90
+  const labels  = line1.map(d => d.age);
   const d1      = line1.map(d => d.balance / 1e6);
   const d2      = line2.map(d => d.balance / 1e6);
   const fireIdx = labels.indexOf(fireAge);
-
-  // Configuração do eixo Y: escala suficiente para acomodar ambas as curvas
-  const yMax = Math.max(...d1, ...d2, 0) * 1.12;
-
-  const scales = {
-    x: {
-      ticks: {
-        color: '#475569', font: { size: 10 }, maxTicksLimit: 14,
-        callback(val) { return this.getLabelForValue(val); }
-      },
-      grid: { color: 'rgba(30,41,59,.7)' },
-    },
-    y: {
-      max: yMax || 1,
-      ticks: {
-        color: '#475569', font: { size: 10 },
-        callback: v => `R$ ${v.toLocaleString(ptBR, { maximumFractionDigits: 0 })} M`,
-      },
-      grid: { color: 'rgba(30,41,59,.7)' },
-    }
-  };
-
-  const tooltip = {
-    backgroundColor: '#0f172a',
-    borderColor: '#1e293b', borderWidth: 1,
-    titleColor: '#94a3b8', bodyColor: '#f1f5f9', padding: 10,
-    callbacks: {
-      title: items => `Idade: ${items[0].label} anos`,
-      label: ctx => ctx.datasetIndex < 2
-        ? ` ${ctx.dataset.label}: ${fmtMChart(ctx.parsed.y * 1e6)}`
-        : null,
-    }
-  };
+  const yMax    = Math.max(...d1, ...d2, 0) * 1.12;
 
   if (ch) {
-    // Atualiza dados em memória (não substitui o objeto inteiro)
     ch.data.labels = labels;
     ch.data.datasets[0].data = d1;
     ch.data.datasets[1].data = d2;
@@ -564,28 +521,14 @@ function drawChart(line1, line2, fireAge) {
     return;
   }
 
-  // Cria o gráfico na primeira vez
   ch = new Chart($('chart'), {
     type: 'line',
-    plugins: [fireLinePlugin],   // plugin inline (só para esta instância)
+    plugins: [fireLinePlugin],
     data: {
       labels,
       datasets: [
-        {
-          label: 'Gasto padrão',
-          data: d1,
-          borderColor: '#4ade80', borderWidth: 2.2,
-          backgroundColor: 'rgba(74,222,128,.04)',
-          tension: 0.3, pointRadius: 0, pointHoverRadius: 5, fill: false,
-        },
-        {
-          label: 'Chegar a zero',
-          data: d2,
-          borderColor: '#60a5fa', borderWidth: 2,
-          borderDash: [6, 4],
-          backgroundColor: 'rgba(96,165,250,.04)',
-          tension: 0.3, pointRadius: 0, pointHoverRadius: 5, fill: false,
-        },
+        { label: 'Gasto padrão',  data: d1, borderColor: '#4ade80', borderWidth: 2.2, backgroundColor: 'rgba(74,222,128,.04)', tension: 0.3, pointRadius: 0, pointHoverRadius: 5, fill: false },
+        { label: 'Chegar a zero', data: d2, borderColor: '#60a5fa', borderWidth: 2, borderDash: [6,4], backgroundColor: 'rgba(96,165,250,.04)', tension: 0.3, pointRadius: 0, pointHoverRadius: 5, fill: false },
       ]
     },
     options: {
@@ -593,43 +536,267 @@ function drawChart(line1, line2, fireAge) {
       interaction: { mode: 'index', intersect: false },
       animation: { duration: 300 },
       plugins: {
-        legend:    { display: false },
+        legend: { display: false },
         fireVLine: { idx: fireIdx, fireAge },
-        tooltip,
+        tooltip: { ...tooltipBase(), callbacks: {
+          title: items => `Idade: ${items[0].label} anos`,
+          label: ctx => ctx.datasetIndex < 2 ? ` ${ctx.dataset.label}: ${fmtMChart(ctx.parsed.y * 1e6)}` : null,
+        }},
       },
-      scales,
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 14, callback(v) { return this.getLabelForValue(v); } }, grid: { color: 'rgba(30,41,59,.7)' } },
+        y: { max: yMax || 1, ticks: { color: '#475569', font: { size: 10 }, callback: v => `R$ ${v.toFixed(0)} M` }, grid: { color: 'rgba(30,41,59,.7)' } },
+      },
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   RENDERIZAÇÃO PRINCIPAL
-═══════════════════════════════════════════════════════ */
+/* ── Gráfico 2 · Sensibilidade da Data do FIRE ────── */
+let chSens = null;
+
+function drawChartSens(p) {
+  const start = Math.max(p.age + 2, 46);
+  const end   = Math.min(70, p.death - 5);
+  const ages  = [];
+  for (let a = start; a <= end; a += 2) ages.push(a);
+
+  const results = ages.map(fireAge => {
+    const cotaProj = p.cotaValue + p.retainedYear * (fireAge - p.age);
+    const pp  = { ...p, fire: fireAge, cota: cotaProj };
+    const sim = simulate(pp, null);
+    const fp  = sim.find(d => d.age >= fireAge);
+    const bal = fp ? fp.balance : 0;
+    return { bal, dwz: calcDWZ(bal, pp) };
+  });
+
+  const wealths    = results.map(r => r.bal / 1e6);
+  const curIdx     = ages.indexOf(p.fire);
+  const bgColors   = ages.map((_, i) => i === curIdx ? 'rgba(74,222,128,.9)'  : 'rgba(74,222,128,.28)');
+  const brdColors  = ages.map((_, i) => i === curIdx ? '#4ade80'              : 'rgba(74,222,128,.5)');
+
+  if (chSens) {
+    chSens.data.labels = ages;
+    chSens.data.datasets[0].data            = wealths;
+    chSens.data.datasets[0].backgroundColor = bgColors;
+    chSens.data.datasets[0].borderColor     = brdColors;
+    chSens.update();
+    return;
+  }
+
+  chSens = new Chart($('chartSens'), {
+    type: 'bar',
+    data: {
+      labels: ages,
+      datasets: [{ label: 'Patrimônio no FIRE', data: wealths, backgroundColor: bgColors, borderColor: brdColors, borderWidth: 1.5, borderRadius: 5 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipBase(), callbacks: {
+          title: items => `FIRE aos ${ages[items[0].dataIndex]} anos`,
+          label: ctx => ` Patrimônio: ${fmtMChart(ctx.parsed.y * 1e6)}`,
+          afterBody: items => {
+            const i = items[0].dataIndex;
+            return [`Gasto máximo DWZ: ${brlInt.format(Math.round(results[i].dwz))}/mês`];
+          },
+        }},
+      },
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(30,41,59,.7)' } },
+        y: { ticks: { color: '#475569', font: { size: 10 }, callback: v => `R$ ${v.toFixed(0)} M` }, grid: { color: 'rgba(30,41,59,.7)' } },
+      }
+    }
+  });
+}
+
+/* ── Gráfico 3 · Composição do Patrimônio no FIRE ─── */
+let chComp = null;
+
+function drawChartComp(p) {
+  const simSemCota = simulate({ ...p, cota: 0 }, null);
+  const fp         = simSemCota.find(d => d.age >= p.fire);
+  const financeiro = Math.max(fp ? fp.balance : 0, 0);
+  const cotas      = p.cota;
+  const total      = financeiro + cotas;
+
+  const data = [financeiro / 1e6, cotas / 1e6];
+
+  if (chComp) {
+    chComp.data.datasets[0].data = data;
+    chComp.update();
+    return;
+  }
+
+  chComp = new Chart($('chartComp'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Acúmulo financeiro', 'Venda das cotas'],
+      datasets: [{
+        data,
+        backgroundColor: ['rgba(74,222,128,.75)', 'rgba(251,146,60,.75)'],
+        borderColor:      ['#4ade80', '#fb923c'],
+        borderWidth: 2, hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      animation: { duration: 300 },
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 16 } },
+        tooltip: { ...tooltipBase(), callbacks: {
+          label: ctx => {
+            const v   = ctx.parsed * 1e6;
+            const pct = total > 0 ? (v / total * 100).toFixed(1) : 0;
+            return ` ${ctx.label}: ${fmtM(v)} (${pct}%)`;
+          }
+        }},
+      }
+    }
+  });
+}
+
+/* ── Gráfico 4 · Cenários de Retorno Real ─────────── */
+let chRet = null;
+
+function drawChartRet(p) {
+  const baseLabel = `${(p.ret * 100).toLocaleString(ptBR, { maximumFractionDigits: 1 })}% a.a. (base)`;
+  const scenarios = [
+    { ret: 0.03, label: '3% a.a. (pessimista)', color: '#f87171', dash: [6, 3] },
+    { ret: p.ret, label: baseLabel,              color: '#4ade80', dash: []     },
+    { ret: 0.08, label: '8% a.a. (otimista)',    color: '#60a5fa', dash: [4, 2] },
+  ];
+
+  const labels = [];
+  for (let a = p.age; a <= p.death; a++) labels.push(a);
+
+  const datasets = scenarios.map(s => {
+    const cotaS = p.cotaValue + p.retainedYear * (p.fire - p.age);
+    const sim   = simulate({ ...p, ret: s.ret, cota: cotaS }, null);
+    return {
+      label: s.label,
+      data: sim.map(d => d.balance / 1e6),
+      borderColor: s.color, borderWidth: s.ret === p.ret ? 2.5 : 1.8,
+      borderDash: s.dash, backgroundColor: 'transparent',
+      tension: 0.3, pointRadius: 0, pointHoverRadius: 5, fill: false,
+    };
+  });
+
+  const yMax = Math.max(...datasets.flatMap(d => d.data), 0) * 1.12;
+
+  if (chRet) {
+    chRet.data.labels = labels;
+    datasets.forEach((ds, i) => {
+      chRet.data.datasets[i].data  = ds.data;
+      chRet.data.datasets[i].label = ds.label;
+    });
+    chRet.options.scales.y.max = yMax || 1;
+    chRet.update();
+    return;
+  }
+
+  chRet = new Chart($('chartRet'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipBase(), callbacks: {
+          title: items => `Idade: ${items[0].label} anos`,
+          label: ctx => ` ${ctx.dataset.label}: ${fmtMChart(ctx.parsed.y * 1e6)}`,
+        }},
+      },
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 12 }, grid: { color: 'rgba(30,41,59,.7)' } },
+        y: { max: yMax || 1, ticks: { color: '#475569', font: { size: 10 }, callback: v => `R$ ${v.toFixed(0)} M` }, grid: { color: 'rgba(30,41,59,.7)' } },
+      }
+    }
+  });
+}
+
+/* ── Gráfico 5 · Fluxo de Caixa Anual ────────────── */
+let chFlow = null;
+
+function drawChartFlow(p) {
+  const ages    = [];
+  const inflow  = [];
+  const cotaEvt = [];
+  const outflow = [];
+
+  for (let age = p.age; age < p.death; age++) {
+    ages.push(age);
+    const spend = phaseSpend(age + 0.5, p) * 12;
+    inflow.push( age < p.fire  ? p.income * 12 : 0);
+    cotaEvt.push(age === p.fire ? p.cota        : 0);
+    outflow.push(-spend);
+  }
+
+  const toM = arr => arr.map(v => v / 1e6);
+
+  if (chFlow) {
+    chFlow.data.labels = ages;
+    chFlow.data.datasets[0].data = toM(inflow);
+    chFlow.data.datasets[1].data = toM(cotaEvt);
+    chFlow.data.datasets[2].data = toM(outflow);
+    chFlow.update();
+    return;
+  }
+
+  chFlow = new Chart($('chartFlow'), {
+    type: 'bar',
+    data: {
+      labels: ages,
+      datasets: [
+        { label: 'Renda pré-FIRE',  data: toM(inflow),  backgroundColor: 'rgba(74,222,128,.65)',  borderColor: '#4ade80', borderWidth: 1, borderRadius: 2, stack: 'a' },
+        { label: 'Venda das cotas', data: toM(cotaEvt), backgroundColor: 'rgba(251,146,60,.8)',   borderColor: '#fb923c', borderWidth: 1, borderRadius: 2, stack: 'a' },
+        { label: 'Gastos',          data: toM(outflow), backgroundColor: 'rgba(248,113,113,.55)', borderColor: '#f87171', borderWidth: 1, borderRadius: 2, stack: 'a' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipBase(), callbacks: {
+          title: items => `Idade: ${ages[items[0].dataIndex]} anos`,
+          label: ctx => {
+            const v = ctx.parsed.y * 1e6;
+            if (v === 0) return null;
+            return ` ${ctx.dataset.label}: ${fmtM(Math.abs(v))}`;
+          }
+        }},
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#475569', font: { size: 10 }, maxTicksLimit: 14 }, grid: { color: 'rgba(30,41,59,.7)' } },
+        y: { stacked: true, ticks: { color: '#475569', font: { size: 10 }, callback: v => `R$ ${v.toFixed(0)} M` }, grid: { color: 'rgba(30,41,59,.7)' } },
+      }
+    }
+  });
+}
+
+/* ── Renderização principal ───────────────────────── */
 function render() {
   const p = P();
 
-  // Atualiza label dinâmico da Fase 1
   $('lblF1').textContent     = `Fase 1 – ${p.age} a 60 anos`;
   $('footDeath').textContent = p.death;
-
-  // Derived: renda mensal e projeção das cotas
   $('dIncome').textContent   = brlInt.format(Math.round(p.income));
   $('dRetained').textContent = fmtM(p.retainedYear);
   $('dCota').textContent     = fmtM(p.cota);
 
-  // Simula a linha do gasto padrão
-  const line1     = simulate(p, null);
-  const firePoint = line1.find(d => d.age >= p.fire);
-  const finalPt   = line1[line1.length - 1];
-
-  // Calcula o gasto Die With Zero a partir do saldo no FIRE
+  const line1       = simulate(p, null);
+  const firePoint   = line1.find(d => d.age >= p.fire);
+  const finalPt     = line1[line1.length - 1];
   const fireBalance = firePoint ? firePoint.balance : 0;
   const dwzSpend    = calcDWZ(fireBalance, p);
+  const line2       = simulate(p, dwzSpend);
 
-  // Simula a linha "chegar a zero"
-  const line2 = simulate(p, dwzSpend);
-
-  // KPIs
   $('kFireW').textContent = firePoint ? fmtM(firePoint.balance) : '—';
   $('kFireA').textContent = `aos ${p.fire} anos`;
 
@@ -641,22 +808,23 @@ function render() {
   $('kDWZ').textContent    = brlInt.format(Math.round(dwzSpend));
   $('kDWZsub').textContent = `por mês, dos ${p.fire} aos ${p.death} anos`;
 
-  // Aviso se o dinheiro acabar antes da morte
   const warn   = $('warn');
   const zeroAt = line1.find(d => d.age > p.fire && d.balance <= 0);
   if (zeroAt) {
-    warn.textContent = `⚠ Com o gasto padrão, o patrimônio se esgota aos ${zeroAt.age} anos — ${p.death - zeroAt.age} ano(s) antes do fim da vida projetado.`;
+    warn.textContent = `⚠ Com o gasto padrão, o patrimônio se esgota aos ${zeroAt.age} anos — ${p.death - zeroAt.age} ano(s) antes do fim de vida projetado.`;
     warn.classList.add('on');
   } else {
     warn.classList.remove('on');
   }
 
   drawChart(line1, line2, p.fire);
+  drawChartSens(p);
+  drawChartComp(p);
+  drawChartRet(p);
+  drawChartFlow(p);
 }
 
-/* ═══════════════════════════════════════════════════════
-   EVENTOS E INICIALIZAÇÃO
-═══════════════════════════════════════════════════════ */
+/* ── Eventos ──────────────────────────────────────── */
 ['iAge', 'iDeath', 'iReturn', 'iFire', 'iCotaPct', 'iPayoutPct'].forEach(id =>
   $(id).addEventListener('input', render)
 );
