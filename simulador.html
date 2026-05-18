@@ -194,8 +194,19 @@
         </div>
       </div>
     </div>
+    <div class="field">
+      <label>Pró-labore líquido mensal</label>
+      <div class="iw">
+        <span class="pre">R$</span>
+        <input type="text" inputmode="numeric" id="iProLabore" class="pl" />
+      </div>
+    </div>
     <div class="derived-row">
-      <span class="derived-lbl">Renda mensal calculada</span>
+      <span class="derived-lbl">Dividendos / mês</span>
+      <span class="derived-val g" id="dDividend">—</span>
+    </div>
+    <div class="derived-row" style="border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.12)">
+      <span class="derived-lbl"><strong style="color:var(--text);font-size:.72rem">Total renda mensal</strong></span>
       <span class="derived-val g" id="dIncome">—</span>
     </div>
     <div class="derived-row">
@@ -400,6 +411,7 @@ function moneyInput(id, def) {
 
 moneyInput('iCapital',    5_500_000);
 moneyInput('iRevenue',   15_000_000);
+moneyInput('iProLabore',          0);
 moneyInput('iCotaValue', 16_000_000);
 moneyInput('iS1',           120_000);
 moneyInput('iS2',            80_000);
@@ -411,11 +423,13 @@ function P() {
   const death = +$('iDeath').value || 90;
   const fire  = Math.min(Math.max(+$('iFire').value || 52, age + 1), death - 1);
 
-  const revenue      = vals['iRevenue']();
-  const cotaPct      = (+$('iCotaPct').value   || 23) / 100;
-  const payoutPct    = (+$('iPayoutPct').value || 50) / 100;
-  const income       = revenue * cotaPct * payoutPct / 12;
-  const retainedYear = revenue * cotaPct * (1 - payoutPct);
+  const revenue         = vals['iRevenue']();
+  const cotaPct         = (+$('iCotaPct').value   || 23) / 100;
+  const payoutPct       = (+$('iPayoutPct').value || 50) / 100;
+  const dividendMonthly = revenue * cotaPct * payoutPct / 12;
+  const proLabore       = vals['iProLabore']();
+  const income          = dividendMonthly + proLabore;
+  const retainedYear    = revenue * cotaPct * (1 - payoutPct);
 
   const cotaValue = vals['iCotaValue']();
   const cota      = cotaValue + retainedYear * (fire - age);
@@ -424,7 +438,7 @@ function P() {
     age, death, fire,
     capital: vals['iCapital'](),
     ret:     (+$('iReturn').value || 5) / 100,
-    income, cota, retainedYear, cotaValue,
+    income, dividendMonthly, proLabore, cota, retainedYear, cotaValue,
     s1: vals['iS1'](),
     s2: vals['iS2'](),
     s3: vals['iS3'](),
@@ -786,6 +800,7 @@ function render() {
 
   $('lblF1').textContent     = `Fase 1 – ${p.age} a 60 anos`;
   $('footDeath').textContent = p.death;
+  $('dDividend').textContent = brlInt.format(Math.round(p.dividendMonthly));
   $('dIncome').textContent   = brlInt.format(Math.round(p.income));
   $('dRetained').textContent = fmtM(p.retainedYear);
   $('dCota').textContent     = fmtM(p.cota);
