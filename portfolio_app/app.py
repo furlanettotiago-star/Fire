@@ -87,18 +87,24 @@ def fetch_usd_brl() -> float:
 
 # ── Formatting helpers ─────────────────────────────────────────────────────────
 
-def fmt_brl(v: float) -> str:
+def fmt_brl(v: float, sign: bool = False) -> str:
     if v is None:
         return "—"
-    sign = "+" if v > 0 else ""
-    return f"R$ {sign}{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    prefix = "+" if (sign and v > 0) else ""
+    return f"R$ {prefix}{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def fmt_pct(v: float) -> str:
+def fmt_usd(v: float) -> str:
     if v is None:
         return "—"
-    sign = "+" if v > 0 else ""
-    return f"{sign}{v:.2f}%"
+    return f"US$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def fmt_pct(v: float, sign: bool = True) -> str:
+    if v is None:
+        return "—"
+    prefix = "+" if (sign and v > 0) else ""
+    return f"{prefix}{v:.2f}%"
 
 
 def color_delta(v: float) -> str:
@@ -203,12 +209,19 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
         st.subheader("Treemap por Classe › Tipo")
         df_tree = df.groupby(["classe", "tipo"])["atual_brl"].sum().reset_index()
         df_tree = df_tree[df_tree["atual_brl"] > 0]
+        total_tree = df_tree["atual_brl"].sum()
+        df_tree["pct"] = df_tree["atual_brl"] / total_tree * 100
         fig3 = px.treemap(
             df_tree,
             path=["classe", "tipo"],
             values="atual_brl",
             color="atual_brl",
             color_continuous_scale="Blues",
+            custom_data=["pct"],
+        )
+        fig3.update_traces(
+            texttemplate="<b>%{label}</b><br>%{customdata[0]:.1f}%",
+            textinfo="label+text",
         )
         fig3.update_layout(height=380, margin=dict(t=20, b=0, l=0, r=0),
                            paper_bgcolor="rgba(0,0,0,0)", font_color="#FAFAFA")
@@ -285,27 +298,14 @@ def render_posicoes(portfolio: dict, df: pd.DataFrame):
                  "custo_brl", "atual_brl", "variacao_brl", "variacao_pct", "status"]
     show_cols = [c for c in show_cols if c in filt.columns]
     disp = filt[show_cols].copy()
+    disp["custo_brl"]    = filt["custo_brl"].apply(fmt_brl)
+    disp["atual_brl"]    = filt["atual_brl"].apply(fmt_brl)
+    disp["variacao_brl"] = filt["variacao_brl"].apply(lambda v: fmt_brl(v, sign=True))
+    disp["variacao_pct"] = filt["variacao_pct"].apply(fmt_pct)
     disp.columns = ["Corretora", "Título", "Emissor", "Taxa", "Vencimento", "Classe", "Tipo",
                     "Custo (R$)", "Atual (R$)", "Variação (R$)", "Variação (%)", "Status"][:len(show_cols)]
 
-    def style_var(val):
-        try:
-            v = float(str(val).replace("R$ ", "").replace(",", ".").replace(".", "", val.count(".")-1))
-            return "color: #2ECC71" if v >= 0 else "color: #E74C3C"
-        except Exception:
-            return ""
-
-    st.dataframe(
-        disp,
-        use_container_width=True,
-        height=500,
-        column_config={
-            "Custo (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
-            "Atual (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
-            "Variação (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
-            "Variação (%)": st.column_config.NumberColumn(format="%.2f%%"),
-        },
-    )
+    st.dataframe(disp, use_container_width=True, height=500)
 
     total_custo = filt["custo_brl"].sum()
     total_atual = filt["atual_brl"].sum()
@@ -346,16 +346,15 @@ def render_analises(portfolio: dict, df: pd.DataFrame):
                 ).reset_index()
                 df_sum["variacao"] = df_sum["atual"] - df_sum["custo"]
                 df_sum["pct"] = df_sum["variacao"] / df_sum["custo"] * 100
+                df_sum_disp = df_sum.copy()
+                df_sum_disp["custo"]    = df_sum["custo"].apply(fmt_brl)
+                df_sum_disp["atual"]    = df_sum["atual"].apply(fmt_brl)
+                df_sum_disp["variacao"] = df_sum["variacao"].apply(lambda v: fmt_brl(v, sign=True))
+                df_sum_disp["pct"]      = df_sum["pct"].apply(fmt_pct)
                 st.dataframe(
-                    df_sum.rename(columns={"tipo": "Indexador", "n": "Qtd", "custo": "Custo",
-                                           "atual": "Atual", "variacao": "Variação", "pct": "Variação %"}),
+                    df_sum_disp.rename(columns={"tipo": "Indexador", "n": "Qtd", "custo": "Custo (R$)",
+                                                "atual": "Atual (R$)", "variacao": "Variação (R$)", "pct": "Variação %"}),
                     use_container_width=True,
-                    column_config={
-                        "Custo": st.column_config.NumberColumn(format="R$ %.0f"),
-                        "Atual": st.column_config.NumberColumn(format="R$ %.0f"),
-                        "Variação": st.column_config.NumberColumn(format="R$ %.0f"),
-                        "Variação %": st.column_config.NumberColumn(format="%.2f%%"),
-                    },
                 )
 
     with tabs[1]:
@@ -381,13 +380,13 @@ def render_analises(portfolio: dict, df: pd.DataFrame):
             df_em_risk = df_em[df_em["% Carteira"] > 2]
             if not df_em_risk.empty:
                 st.warning(f"⚠️ {len(df_em_risk)} emissores representam mais de 2% da carteira de renda fixa.")
-                st.dataframe(df_em_risk[["emissor", "atual_brl", "% Carteira"]].rename(
-                    columns={"emissor": "Emissor", "atual_brl": "Atual (R$)", "% Carteira": "% Carteira RF"}),
+                    df_risk_disp = df_em_risk[["emissor", "atual_brl", "% Carteira"]].copy()
+                df_risk_disp["atual_brl"]   = df_em_risk["atual_brl"].apply(fmt_brl)
+                df_risk_disp["% Carteira"]  = df_em_risk["% Carteira"].apply(lambda v: fmt_pct(v, sign=False))
+                st.dataframe(
+                    df_risk_disp.rename(columns={"emissor": "Emissor", "atual_brl": "Atual (R$)", "% Carteira": "% Cart. RF"}),
                     use_container_width=True,
-                    column_config={
-                        "Atual (R$)": st.column_config.NumberColumn(format="R$ %.0f"),
-                        "% Carteira RF": st.column_config.NumberColumn(format="%.2f%%"),
-                    })
+                )
 
     with tabs[2]:
         df_rv = df[df["classe"].isin(["AÇÕES", "FII"])]
