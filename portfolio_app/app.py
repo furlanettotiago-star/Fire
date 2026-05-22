@@ -288,29 +288,10 @@ def kpi_card(label: str, value: str, delta: str = "", border_color: str = C_BLUE
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 
-def render_sidebar(portfolio: dict):
-    with st.sidebar:
-        st.markdown("### 📊 Carteira Tiago")
-        st.markdown("---")
-        page = st.radio(
-            "Menu",
-            ["🏠 Dashboard", "💼 Posições", "📈 Análises",
-             "➕ Gerenciar", "🔄 Atualizar", "⚙️ Config"],
-            label_visibility="collapsed",
-        )
-        st.markdown("---")
-        usd = portfolio["metadata"].get("usd_brl_rate", 5.87)
-        updated = portfolio["metadata"].get("last_updated", "—")
-        st.metric("USD/BRL", f"R$ {usd:.4f}")
-        st.caption(f"Atualizado: {updated}")
-        st.markdown("---")
-        st.download_button(
-            "💾 Exportar JSON",
-            data=json.dumps(portfolio, ensure_ascii=False, indent=2).encode("utf-8"),
-            file_name=f"carteira_{date.today().isoformat()}.json",
-            mime="application/json",
-            use_container_width=True,
-        )
+def render_nav(portfolio: dict) -> str:
+    pages = ["🏠 Dashboard", "💼 Posições", "📈 Análises",
+             "➕ Gerenciar", "🔄 Atualizar", "⚙️ Config"]
+    page = st.selectbox("Navegar", pages, label_visibility="collapsed")
     return page
 
 
@@ -410,9 +391,9 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── Performance por Classe ──
-    st.markdown('<div class="section-title">Performance por Classe</div>', unsafe_allow_html=True)
-    df_perf = df.groupby("classe").agg(
+    # ── Performance por Tipo ──
+    st.markdown('<div class="section-title">Performance por Tipo</div>', unsafe_allow_html=True)
+    df_perf = df.groupby("tipo").agg(
         custo=("custo_brl", "sum"), atual=("atual_brl", "sum"),
     ).reset_index()
     df_perf["variacao"] = df_perf["atual"] - df_perf["custo"]
@@ -424,7 +405,7 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
     _pad  = max(abs(_pmin), abs(_pmax)) * 0.45
     fig_perf = go.Figure(go.Bar(
         x=df_perf["pct"],
-        y=df_perf["classe"],
+        y=df_perf["tipo"],
         orientation="h",
         text=[fmt_pct(p) for p in df_perf["pct"]],
         textposition="outside",
@@ -433,7 +414,7 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
         textfont=dict(size=11, color=C_TEXT),
     ))
     fig_perf.update_layout(
-        **chart_layout(300),
+        **chart_layout(380),
         xaxis=dict(showticklabels=False, showgrid=False, zeroline=True,
                    zerolinecolor="#2A3A55",
                    range=[_pmin - _pad, _pmax + _pad]),
@@ -843,7 +824,7 @@ def main():
     inject_css()
     portfolio = load_portfolio()
     df        = get_df(portfolio)
-    page      = render_sidebar(portfolio)
+    page      = render_nav(portfolio)
 
     if   page == "🏠 Dashboard":  render_dashboard(portfolio, df)
     elif page == "💼 Posições":   render_posicoes(portfolio, df)
