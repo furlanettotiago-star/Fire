@@ -356,22 +356,17 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
         textfont_size=10,
         insidetextorientation="radial",
     )
-    fig_tipo.update_layout(
-        **chart_layout(360),
+    _tipo_layout = chart_layout(360)
+    _tipo_layout.update(
         showlegend=True,
-        legend=dict(
-            orientation="v",
-            x=1.01, y=0.5,
-            font=dict(size=10, color=C_TEXT),
-            bgcolor="rgba(0,0,0,0)",
-        ),
+        legend=dict(orientation="v", x=1.01, y=0.5,
+                    font=dict(size=10, color=C_TEXT), bgcolor="rgba(0,0,0,0)"),
         margin=dict(t=20, b=20, l=10, r=120),
-        annotations=[dict(
-            text=f"<b>{fmt_brl(total_atual)}</b>",
-            x=0.38, y=0.5, font_size=12, showarrow=False,
-            font_color=C_TEXT,
-        )],
+        annotations=[dict(text=f"<b>{fmt_brl(total_atual)}</b>",
+                          x=0.38, y=0.5, font_size=12, showarrow=False,
+                          font_color=C_TEXT)],
     )
+    fig_tipo.update_layout(**_tipo_layout)
     st.plotly_chart(fig_tipo, use_container_width=True)
 
     # ── Treemap Classe › Tipo ──
