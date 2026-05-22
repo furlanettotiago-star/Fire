@@ -93,11 +93,13 @@ body, .stApp {{
     margin-bottom: 5px;
 }}
 .kpi-value {{
-    font-size: 1.35rem;
+    font-size: clamp(0.85rem, 3.5vw, 1.25rem);
     font-weight: 700;
     color: {C_TEXT};
     line-height: 1.2;
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }}
 .kpi-delta {{
     font-size: 12px;
@@ -349,17 +351,24 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
         hole=0.55, color_discrete_sequence=CHART_COLORS,
     )
     fig_tipo.update_traces(
-        textposition="outside",
-        textinfo="label",
-        textfont_size=11,
-        pull=[0.03] * len(df_tipo),
+        textposition="inside",
+        textinfo="label+percent",
+        textfont_size=10,
+        insidetextorientation="radial",
     )
     fig_tipo.update_layout(
-        **chart_layout(380),
-        showlegend=False,
+        **chart_layout(360),
+        showlegend=True,
+        legend=dict(
+            orientation="v",
+            x=1.01, y=0.5,
+            font=dict(size=10, color=C_TEXT),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        margin=dict(t=20, b=20, l=10, r=120),
         annotations=[dict(
             text=f"<b>{fmt_brl(total_atual)}</b>",
-            x=0.5, y=0.5, font_size=14, showarrow=False,
+            x=0.38, y=0.5, font_size=12, showarrow=False,
             font_color=C_TEXT,
         )],
     )
@@ -415,19 +424,24 @@ def render_dashboard(portfolio: dict, df: pd.DataFrame):
     df_perf["pct"]      = df_perf["variacao"] / df_perf["custo"] * 100
     df_perf = df_perf[df_perf["custo"] > 0].sort_values("pct")
     c_perf = [C_GREEN if v >= 0 else C_RED for v in df_perf["pct"]]
+    _pmin = df_perf["pct"].min() if len(df_perf) else -10
+    _pmax = df_perf["pct"].max() if len(df_perf) else 10
+    _pad  = max(abs(_pmin), abs(_pmax)) * 0.45
     fig_perf = go.Figure(go.Bar(
         x=df_perf["pct"],
         y=df_perf["classe"],
         orientation="h",
         text=[fmt_pct(p) for p in df_perf["pct"]],
         textposition="outside",
+        cliponaxis=False,
         marker_color=c_perf,
         textfont=dict(size=11, color=C_TEXT),
     ))
     fig_perf.update_layout(
         **chart_layout(300),
         xaxis=dict(showticklabels=False, showgrid=False, zeroline=True,
-                   zerolinecolor="#2A3A55"),
+                   zerolinecolor="#2A3A55",
+                   range=[_pmin - _pad, _pmax + _pad]),
         yaxis=dict(showgrid=False),
         showlegend=False,
     )
